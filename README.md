@@ -34,19 +34,16 @@ Phase 5 uses the selected incremental modular refactor strategy. The static stac
 
 The catalog target is **100 categories × 10 bot concepts = 1,000 unique records**.
 
-The runtime repository now composes:
+The canonical CSV now contains **1,000 complete concept records across 100 categories**. The malformed former final row `B065-06` was completed, four additional concepts finish category 65, and categories 66–100 each contain ten category-specific concepts. The CSV is the single source of truth; runtime-generated concepts and extension-file merging are no longer used.
 
-1. the original audited 646-record dataset,
-2. the four missing records completing category 65,
-3. ten records for category 66,
-4. a research-backed registry for categories 67–100, with ten deterministic concept records per category.
+The loader validates before displaying data:
 
-The loader enforces two hard invariants before the application can use the dataset:
+- exactly **1,000 records and unique Bot IDs**;
+- exactly **1,000 unique Bot Names**;
+- exactly **100 categories with ten records each**;
+- all required CSV fields are non-empty.
 
-- exactly **1,000 unique Bot IDs**;
-- exactly **100 distinct categories**.
-
-If either invariant fails, catalog loading fails instead of silently displaying an incomplete dataset.
+If a validation fails, catalog loading reports an error instead of silently displaying incomplete or duplicated data.
 
 ## Important data boundary
 
