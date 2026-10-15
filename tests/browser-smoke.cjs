@@ -69,6 +69,15 @@ async function main() {
     await page.locator('#search').fill('<img src=x onerror=window.__tbmcXss=1>');
     assert.equal(await page.locator('#rows img').count(), 0, 'Search text must not become executable HTML');
     assert.equal(await page.evaluate(() => window.__tbmcXss || 0), 0, 'XSS probe must not execute');
+    const cspResult = await page.evaluate(() => new Promise(resolve => {
+      document.addEventListener('securitypolicyviolation', event => resolve(event.violatedDirective), { once: true });
+      const injected = document.createElement('script');
+      injected.textContent = 'window.__tbmcCspProbe = 1';
+      document.head.appendChild(injected);
+      setTimeout(() => resolve('no-violation'), 150);
+    }));
+    assert.match(cspResult, /script-src/i, 'CSP should block injected inline scripts');
+    assert.equal(await page.evaluate(() => window.__tbmcCspProbe || 0), 0, 'CSP probe must not execute');
 
     await page.locator('#moreNavBtn').click();
     await page.locator('#moreMenu a[data-route="system"]').click();
