@@ -11,118 +11,41 @@ permissions:
   contents: read
 
 jobs:
-  validate:
+  source-and-data-audit:
+    name: Source, data integrity and static security audit
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
-      - name: Validate Phase 5 HTML structure and module wiring
-        run: |
-          python3 - <<'PY'
-          from html.parser import HTMLParser
-          from pathlib import Path
-          source=Path('index.html').read_text(encoding='utf-8')
-          class Parser(HTMLParser):
-              def __init__(self):
-                  super().__init__(convert_charrefs=True); self.ids=set(); self.html=0; self.html_end=0; self.scripts=[]
-              def handle_starttag(self,tag,attrs):
-                  attrs=dict(attrs)
-                  if 'id' in attrs:
-                      assert attrs['id'] not in self.ids, f"Duplicate HTML id: {attrs['id']}"
-                      self.ids.add(attrs['id'])
-                  if tag=='html': self.html+=1
-                  if tag=='script': self.scripts.append(attrs.get('src',''))
-              def handle_endtag(self,tag):
-                  if tag=='html': self.html_end+=1
-          p=Parser(); p.feed(source); p.close()
-          assert p.html==1 and p.html_end==1
-          required=['moreNavBtn','moreMenu','themeSelect','page-home','page-dashboard','page-catalog','page-bot','page-profile','page-system','rows','search','category','api','automation','sort','pageSize','prev','next']
-          assert not(set(required)-p.ids), sorted(set(required)-p.ids)
-          expected=['./assets/js/catalog-repository.js','./assets/js/app-shell.js','./assets/js/catalog-feature.js']
-          assert p.scripts==expected, p.scripts
-          assert Path('assets/css/app.css').exists()
-          print(f'Phase 5 HTML/module checks passed: {len(p.ids)} unique IDs.')
-          PY
-
-      - name: Validate external JavaScript syntax
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent catalog integrity audit
+        run: python3 scripts/validate_catalog.py
+      - name: JavaScript syntax checks
         run: |
           node --check assets/js/catalog-repository.js
           node --check assets/js/app-shell.js
           node --check assets/js/catalog-feature.js
 
-      - name: Audit catalog dataset and completion registry
+  browser-regression:
+    name: Real-data browser regression, security and responsive tests
+    needs: source-and-data-audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright
         run: |
-          python3 - <<'PY'
-          import csv, json
-          from pathlib import Path
-          path=Path('data/Telegram_Bot_Master_Catalog_1000.csv'); ext=Path('data/Telegram_Bot_Master_Catalog_Research_Extension.csv'); registry=Path('data/research/catalog-concept-categories-67-100.json')
-          expected=['index','Bot ID','Category No','Category','English Category','Bot Name','What it does','Free/Low-cost Technology','API Required?','Automation Potential','Monetization Potential','Suggested MVP','Notes']
-          def read(path):
-              with path.open('r',encoding='utf-8-sig',newline='') as fh:return list(csv.reader(fh))
-          rows=read(path); extrows=read(ext)
-          hi=next(i for i,row in enumerate(rows) if row==expected); ei=next(i for i,row in enumerate(extrows) if row==expected)
-          base=rows[hi+1:]; extension=extrows[ei+1:]; cats=json.loads(registry.read_text(encoding='utf-8'))
-          assert len(base)==646 and len(extension)==14 and len(cats)==34 and [x['no'] for x in cats]==list(range(67,101))
-          ids=[r[1].strip() for r in base+extension if len(r)>1 and r[1].strip()]+[f"B{x['no']:03d}-{n:02d}" for x in cats for n in range(1,11)]
-          category_set={r[4].strip() for r in base+extension if len(r)>4 and r[4].strip()}|{x['english'] for x in cats}
-          assert len(ids)==1000 and len(set(ids))==1000 and len(category_set)==100
-          print('Completion audit PASS: primary=646, extension=14, generated=340, total=1000, categories=100.')
-          PY
-
-      - name: Browser smoke tests
-        run: |
-          mkdir -p /tmp/tbmc-browser
           npm install --prefix /tmp/tbmc-browser playwright
           /tmp/tbmc-browser/node_modules/.bin/playwright install --with-deps chromium
-          python3 -m http.server 4173 >/tmp/tbmc-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
-          for i in $(seq 1 20); do curl -fsS http://127.0.0.1:4173/index.html >/dev/null && break; sleep 1; done
-          cat >/tmp/tbmc-browser/smoke.cjs <<'JS'
-          const {chromium}=require('/tmp/tbmc-browser/node_modules/playwright');
-          const assert=require('node:assert/strict');
-          (async()=>{
-            const browser=await chromium.launch({headless:true});
-            const page=await browser.newPage({viewport:{width:390,height:844}});
-            const errors=[]; page.on('pageerror',e=>errors.push(e.message));
-            const headers=['index','Bot ID','Category No','Category','English Category','Bot Name','What it does','Free/Low-cost Technology','API Required?','Automation Potential','Monetization Potential','Suggested MVP','Notes'];
-            const csvRow=(i,id,cat)=>`${i},${id},${cat},Test Category ${cat},Test Category ${cat},${id} Bot,Test description,Free,No,উচ্চ,Medium,Test MVP,`;
-            const primaryRows=[];
-            for(let cat=1;cat<=64;cat++) for(let n=1;n<=10;n++) primaryRows.push(csvRow(primaryRows.length+1,`B${String(cat).padStart(3,'0')}-${String(n).padStart(2,'0')}`,cat));
-            for(let n=1;n<=6;n++) primaryRows.push(csvRow(primaryRows.length+1,`B065-${String(n).padStart(2,'0')}`,65));
-            const sample=[headers.join(','),...primaryRows].join('\n');
-            const extensionRows=Array.from({length:14},(_,i)=>`${646+i},EXT-${String(i+1).padStart(3,'0')},${i<4?65:66},Extension ${i<4?65:66},Test Category ${i<4?65:66},Extension Bot ${i+1},Extension description,Free,No,উচ্চ,Medium,Extension MVP,`);
-            const extension=[headers.join(','),...extensionRows].join('\n');
-            const registry=JSON.stringify(Array.from({length:34},(_,i)=>({no:67+i,category:`Research ${67+i}`,english:`Research ${67+i}`})));
-            await page.route('**/data/Telegram_Bot_Master_Catalog_1000.csv',r=>r.fulfill({status:200,contentType:'text/csv; charset=utf-8',body:sample}));
-            await page.route('**/data/Telegram_Bot_Master_Catalog_Research_Extension.csv',r=>r.fulfill({status:200,contentType:'text/csv; charset=utf-8',body:extension}));
-            await page.route('**/data/research/catalog-concept-categories-67-100.json',r=>r.fulfill({status:200,contentType:'application/json; charset=utf-8',body:registry}));
-            await page.goto('http://127.0.0.1:4173/index.html');
-            await page.waitForFunction(()=>document.querySelector('#csvBadge')?.textContent==='Loaded');
-            assert.equal(await page.locator('.bottom-nav').isVisible(),true);
-            await page.locator('[data-mobile-route="catalog"]').click();
-            await page.locator('#search').fill('B001-01');
-            assert.equal(await page.locator('#matchStat').textContent(),'1');
-            await page.locator('#sort').selectOption('name-desc');
-            await page.locator('#rows [data-bot="B001-01"]').first().click();
-            await page.waitForFunction(()=>location.hash==='#bot/B001-01');
-            assert.match(await page.locator('#botDetail').textContent(),/B001-01 Bot/);
-            await page.evaluate(()=>history.back());
-            await page.waitForFunction(()=>location.hash==='#catalog'&&document.querySelector('#page-catalog').classList.contains('active'));
-            assert.equal(await page.locator('#search').inputValue(),'B001-01');
-            await page.locator('#moreNavBtn').click();
-            await page.locator('#moreMenu a[data-route="system"]').click();
-            await page.locator('#themeSelect').selectOption('light');
-            assert.equal(await page.locator('html').getAttribute('data-theme'),'light');
-            await page.evaluate(()=>history.back());
-            await page.waitForFunction(()=>location.hash==='#catalog');
-            await page.evaluate(()=>location.hash='#bot/DOES-NOT-EXIST');
-            await page.waitForFunction(()=>document.querySelector('#page-bot').classList.contains('active'));
-            assert.match(await page.locator('#botDetail').textContent(),/Bot not found/);
-            assert.deepEqual(errors,[],'uncaught browser errors detected');
-            await browser.close();
-            console.log('Phase 5 smoke tests passed: composite 1000-record fixture, mobile nav, search, sort, details/back state, More/System/theme, Not Found and no page errors.');
-          })().catch(e=>{console.error(e);process.exit(1)});
-          JS
-          node /tmp/tbmc-browser/smoke.cjs
+      - name: Run mobile and desktop browser smoke tests
+        env:
+          NODE_PATH: /tmp/tbmc-browser/node_modules
+        run: node tests/browser-smoke.cjs
+
