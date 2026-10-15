@@ -94,9 +94,9 @@ require(p.scripts == ["./assets/js/catalog-repository.js", "./assets/js/app-shel
 require(not p.inline_handlers, f"Inline event handlers are disallowed: {p.inline_handlers}")
 for source_path in [ROOT / "assets/js/catalog-repository.js", ROOT / "assets/js/app-shell.js", ROOT / "assets/js/catalog-feature.js"]:
     source = source_path.read_text(encoding="utf-8")
-    require(re.search(r"\\beval\\s*\\(", source) is None, f"eval() found in {source_path}")
-    require(re.search(r"\\bnew\\s+Function\\b", source) is None, f"Function constructor found in {source_path}")
-    require(re.search(r"document\\s*\\.\\s*write\\s*\\(", source) is None, f"document.write() found in {source_path}")
+    require(re.search(r"\beval\s*\(", source) is None, f"eval() found in {source_path}")
+    require(re.search(r"\bnew\s+Function\b", source) is None, f"Function constructor found in {source_path}")
+    require(re.search(r"document\s*\.\s*write\s*\(", source) is None, f"document.write() found in {source_path}")
 
 print("Security static guardrails: PASS (local scripts only; no inline handlers/eval/Function/document.write)")
 print("Security boundary disclosure (no backend/admin authentication): PASS")
