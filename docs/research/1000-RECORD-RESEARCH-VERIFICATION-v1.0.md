@@ -34,3 +34,25 @@ Independent directory evidence shows a large live ecosystem. TGSONAR reported mo
 ## No-fake-data rule
 
 The catalog does **not** use invented public usernames, invented Telegram URLs, invented activity metrics or invented claims that a named concept already exists. Concept names are labels for buildable master ideas. Generated records preserve this boundary in their `Notes` field.
+
+## Post-commit CSV source audit — 2026-10-15
+
+Canonical source: `data/Telegram_Bot_Master_Catalog_1000.csv`
+
+- CSV content re-fetched from the repository after commit and parsed using the application's 13-column CSV schema.
+- Complete data rows: **1,000**.
+- Unique Bot IDs: **1,000**.
+- Unique Bot Names (case-insensitive exact match): **1,000**.
+- Distinct English categories: **100**.
+- Records per category: **10 for every category**.
+- Rows with missing required fields: **0**.
+- Truncated source row found before repair: `B065-06` (six of thirteen columns); it was completed in place.
+- Four additional records complete category 65; categories 66–100 were added with ten concept records each.
+- Obsolete extension CSV and category registry were removed from the active repository because the canonical CSV now contains the complete catalog.
+- The browser loader now uses the canonical CSV only and fails explicitly if record, ID, name, category-count, per-category-count or required-field validation fails.
+
+### Evidence boundary
+
+The GitHub repository source and committed CSV were re-fetched and checked after the changes. This confirms the committed source data, not a browser-level production deployment. The GitHub Pages URL could not be independently fetched by the available web checker in this run, so **production-page deployment and interactive browser smoke testing are not claimed as passed**.
+
+The 354 completed/added records are **bot concepts and implementation workflows**, not claims that public Telegram bots with these exact names currently exist. No public usernames, live URLs, user counts or availability claims were invented.
