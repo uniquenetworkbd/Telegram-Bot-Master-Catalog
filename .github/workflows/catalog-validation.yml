@@ -72,7 +72,7 @@ jobs:
           print(f"HTML checks passed: {len(parser.ids)} unique IDs; all six pages and mobile controls found.")
           PY
 
-      - name: Validate catalog CSV structure and integrity
+      - name: Audit catalog CSV structure and integrity
         run: |
           python3 - <<'PY'
           import csv
@@ -83,37 +83,42 @@ jobs:
           assert path.exists(), f"Missing catalog dataset: {path}"
 
           with path.open("r", encoding="utf-8-sig", newline="") as fh:
-              reader = csv.DictReader(fh)
-              fieldnames = reader.fieldnames or []
+              reader = csv.reader(fh)
+              header = next(reader, [])
               rows = list(reader)
 
-          expected = {
+          expected = [
               "index", "Bot ID", "Category No", "Category", "English Category",
               "Bot Name", "What it does", "Free/Low-cost Technology", "API Required?",
               "Automation Potential", "Monetization Potential", "Suggested MVP", "Notes"
-          }
+          ]
+          assert header == expected, f"Catalog CSV header changed unexpectedly: {header!r}"
           assert rows, "Catalog CSV contains no data records"
-          assert set(fieldnames) == expected, f"Catalog CSV schema changed unexpectedly: {fieldnames!r}"
 
           ids = []
           category_numbers = []
-          for row in rows:
-              bot_id = (row.get("Bot ID") or "").strip()
-              category = (row.get("Category") or "").strip()
-              bot_name = (row.get("Bot Name") or "").strip()
-              value = (row.get("Category No") or "").strip()
-              assert bot_id, "Every catalog record must have a Bot ID"
-              assert category, f"Missing Category for {bot_id}"
-              assert bot_name, f"Missing Bot Name for {bot_id}"
-              assert value.isdigit(), f"Invalid Category No for {bot_id}: {value!r}"
-              ids.append(bot_id)
-              category_numbers.append(int(value))
+          missing_core = []
+          for line_no, row in enumerate(rows, start=2):
+              bot_id = row[1].strip() if len(row) > 1 else ""
+              category_no = row[2].strip() if len(row) > 2 else ""
+              category = row[3].strip() if len(row) > 3 else ""
+              bot_name = row[5].strip() if len(row) > 5 else ""
 
+              if not bot_id or not category_no or not category or not bot_name:
+                  missing_core.append(line_no)
+                  continue
+
+              assert category_no.isdigit(), f"Invalid Category No at CSV line {line_no}: {category_no!r}"
+              ids.append(bot_id)
+              category_numbers.append(int(category_no))
+
+          assert not missing_core, f"Missing core catalog fields at CSV lines: {missing_core[:10]}"
           assert len(ids) == len(set(ids)), "Duplicate Bot ID detected"
+
           counts = Counter(category_numbers)
           assert min(counts) == 1, "Category numbering must start at 1"
           print(f"Catalog integrity passed: {len(rows)} records, {len(counts)} categories, {len(set(ids))} unique Bot IDs.")
-          print("Note: CI validates structural integrity only; it does not require the planned 1,000-record target.")
+          print("Planned target remains 1,000 records / 100 categories; CI does not fabricate missing records.")
           print("Category distribution:", dict(sorted(counts.items())))
           PY
 
