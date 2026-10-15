@@ -1,0 +1,65 @@
+from pathlib import Path
+
+p = Path('index.html')
+s = p.read_text(encoding='utf-8')
+
+old = '''<div class="systemlist" id="runtimeChecks">
+    <div class="systemrow"><span class="systemicon">▤</span><div><strong>Catalog CSV</strong><p id="csvCheck">Checking file…</p></div><span class="tag" id="csvBadge">Checking</span></div>
+    <div class="systemrow"><span class="systemicon">⌘</span><div><strong>Client-side filtering</strong><p>Search and filters run in this browser</p></div><span class="tag green">Ready</span></div>
+    <div class="systemrow"><span class="systemicon">▦</span><div><strong>Responsive interface</strong><p>Adaptive desktop, tablet and mobile layout</p></div><span class="tag green">Enabled</span></div>
+    <div class="systemrow"><span class="systemicon">⇩</span><div><strong>CSV export</strong><p>Exports the currently filtered records</p></div><span class="tag green">Ready</span></div>
+   </div>'''
+new = '''<div class="runtime-headline"><div><strong>Runtime checks</strong><p>Live capability and data checks from this browser session</p></div><div class="runtime-meta"><span id="runtimeLastChecked">Not checked yet</span><span class="tag" id="runtimeOverall">Checking</span></div></div>
+   <div class="systemlist runtime-grid" id="runtimeChecks">
+    <div class="systemrow"><span class="systemicon">▤</span><div><strong>Catalog data source</strong><p id="csvCheck">Checking the CSV file…</p></div><span class="tag" id="csvBadge">Checking</span></div>
+    <div class="systemrow"><span class="systemicon">✓</span><div><strong>Data integrity</strong><p id="integrityCheck">Waiting for catalog records</p></div><span class="tag" id="integrityBadge">Checking</span></div>
+    <div class="systemrow"><span class="systemicon">⌘</span><div><strong>Search &amp; filtering</strong><p id="filterCheck">Waiting for the catalog data layer</p></div><span class="tag" id="filterBadge">Checking</span></div>
+    <div class="systemrow"><span class="systemicon">▦</span><div><strong>Responsive layout</strong><p id="responsiveCheck">Checking current viewport overflow</p></div><span class="tag" id="responsiveBadge">Checking</span></div>
+    <div class="systemrow"><span class="systemicon">⇩</span><div><strong>CSV export</strong><p id="exportCheck">Checking browser download support</p></div><span class="tag" id="exportBadge">Checking</span></div>
+    <div class="systemrow"><span class="systemicon">◐</span><div><strong>Theme &amp; preferences</strong><p id="themeCheck">Checking theme control and local preference storage</p></div><span class="tag" id="themeBadge">Checking</span></div>
+    <div class="systemrow"><span class="systemicon">↪</span><div><strong>Navigation &amp; state</strong><p id="navCheck">Checking route and state controls</p></div><span class="tag" id="navBadge">Checking</span></div>
+   </div>'''
+assert old in s
+s = s.replace(old, new, 1)
+
+anchor = '.systemrow .tag{margin-left:auto}.notice{'
+repl = '.systemrow .tag{margin-left:auto;flex:none}.systemrow>div:nth-child(2){min-width:0;flex:1}.runtime-headline{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}.runtime-headline>div:first-child>strong{display:block;font-size:17px}.runtime-headline p{margin:3px 0 0;color:var(--muted);font-size:12px}.runtime-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;color:var(--muted);font-size:10px}.runtime-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.tag.red{border-color:#7b3b48;background:#321923;color:#ffb2bd}.tag.blue{border-color:#40577e;background:#182640;color:#a9c1ed}.notice{'
+assert anchor in s
+s = s.replace(anchor, repl, 1)
+
+anchor = '@media(max-width:720px){.tablewrap{overflow:visible}'
+repl = '@media(max-width:720px){.runtime-headline{flex-direction:column;gap:8px}.runtime-meta{justify-content:flex-start}.runtime-grid{grid-template-columns:1fr}.systemrow{align-items:flex-start}.systemrow .tag{margin-top:2px}.tablewrap{overflow:visible}'
+assert anchor in s
+s = s.replace(anchor, repl, 1)
+
+anchor = '''<label style="display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px">Rows <select id="pageSize" class="field" style="width:88px;padding:7px"><option>25</option><option>50</option><option>100</option></select></label>'''
+repl = '''<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button class="button" id="exportBtn" type="button">⇩ Export CSV</button><label style="display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px">Rows <select id="pageSize" class="field" style="width:88px;padding:7px"><option>25</option><option>50</option><option>100</option></select></label></div>'''
+assert anchor in s
+s = s.replace(anchor, repl, 1)
+
+old = "function setMetrics(){const cats=Object.keys(categoryCounts()).length,api=all.filter(b=>isApi(b['API Required?'])).length,high=all.filter(b=>isHigh(b['Automation Potential'])).length;['homeTotal','dashTotal'].forEach(id=>setText(id,all.length.toLocaleString()));['homeCats','dashCats','catalogCatStat','systemCategories'].forEach(id=>setText(id,cats.toLocaleString()));['homeApi','dashApi','catalogApiStat'].forEach(id=>setText(id,api.toLocaleString()));['homeAuto','dashAuto'].forEach(id=>setText(id,high.toLocaleString()));setText('systemRecords',all.length.toLocaleString());setText('footerCount',all.length.toLocaleString()+' catalog records');setText('matchStat',all.length.toLocaleString());renderBars('categoryBars',categoryCounts(),8);renderBars('automationBars',automationCounts(),4)}"
+new = old + r'''
+function setCheck(checkId,badgeId,status,detail,tone='green'){setText(checkId,detail);const badge=$(badgeId);if(!badge)return;badge.textContent=status;badge.className='tag'+(tone?' '+tone:'')}
+function runRuntimeChecks(){const now=new Date();setText('runtimeLastChecked','Checked '+now.toLocaleTimeString());let review=0,failed=0;const mark=t=>{if(t==='amber')review++;if(t==='red')failed++};
+const loaded=all.length>0;const csvTone=loaded?'green':'red';setCheck('csvCheck','csvBadge',loaded?'Loaded':'Failed',loaded?('Loaded '+all.length.toLocaleString()+' records from '+DATA_URL):'Catalog records are unavailable',csvTone);mark(csvTone);
+const ids=all.map(b=>String(b['Bot ID']||'').trim()).filter(Boolean),uniqueIds=new Set(ids),missingCategory=all.filter(b=>!String(b['Category']||b['English Category']||'').trim()).length,duplicateIds=ids.length-uniqueIds.size;const integrityTone=!loaded?'red':duplicateIds||missingCategory?'amber':'green';setCheck('integrityCheck','integrityBadge',!loaded?'Waiting':integrityTone==='green'?'Healthy':'Review',!loaded?'No records available to validate':duplicateIds?duplicateIds+' duplicate Bot ID'+(duplicateIds===1?'':'s')+' detected':missingCategory?missingCategory+' record'+(missingCategory===1?'':'s')+' missing category data':'Required Bot IDs and categories are present',integrityTone);mark(integrityTone);
+const filterReady=loaded&&$('search')&&$('category')&&$('api')&&$('automation')&&Array.isArray(filtered);const filterTone=filterReady?'green':'red';setCheck('filterCheck','filterBadge',filterReady?'Ready':'Unavailable',filterReady?'Search, category, API and automation filters are active in this browser':'Catalog filter controls are not ready',filterTone);mark(filterTone);
+const overflow=document.documentElement.scrollWidth>window.innerWidth+4||document.body.scrollWidth>window.innerWidth+4;const responsiveTone=overflow?'amber':'green';setCheck('responsiveCheck','responsiveBadge',overflow?'Review':'Healthy',overflow?'Horizontal overflow detected at the current viewport':'No horizontal overflow detected at the current viewport',responsiveTone);mark(responsiveTone);
+const exportReady=typeof exportCSV==='function'&&typeof Blob==='function'&&typeof URL!=='undefined'&&typeof URL.createObjectURL==='function'&&$('exportBtn');const exportTone=exportReady?'green':'red';setCheck('exportCheck','exportBadge',exportReady?'Ready':'Unavailable',exportReady?'Filtered records can be exported as CSV':'CSV export is not available in this browser',exportTone);mark(exportTone);
+let storageReady=false;try{const probe='__tbmc_runtime_probe__';localStorage.setItem(probe,'1');storageReady=localStorage.getItem(probe)==='1';localStorage.removeItem(probe)}catch(e){}const themeReady=!!$('themeSelect')&&storageReady;const themeTone=themeReady?'green':$('themeSelect')?'amber':'red';setCheck('themeCheck','themeBadge',themeReady?'Ready':themeTone==='amber'?'Session only':'Unavailable',themeReady?'System, Light and Dark themes are available and preferences can persist':$('themeSelect')?'Theme control is available but preference storage is restricted':'Theme control is unavailable',themeTone);mark(themeTone);
+const navReady=['home','dashboard','catalog','bot','profile','system'].every(r=>$('page-'+r))&&typeof history.pushState==='function';const navTone=navReady?'green':'red';setCheck('navCheck','navBadge',navReady?'Ready':'Unavailable',navReady?'Routes, browser history and page state controls are present':'Navigation controls are incomplete',navTone);mark(navTone);
+const overall=failed?'Attention':review?'Review':'Healthy';const overallTone=failed?'red':review?'amber':'green';setText('runtimeOverall',overall);$('runtimeOverall').className='tag '+overallTone}
+'''
+assert old in s
+s = s.replace(old, new, 1)
+
+old = "async function init(){try{const res=await fetch(DATA_URL,{cache:'no-store'});if(!res.ok)throw new Error('CSV returned HTTP '+res.status);const text=await res.text();all=parseCSV(text);if(!all.length)throw new Error('The CSV was loaded but no valid bot records were parsed');const cats=[...new Set(all.map(b=>b['English Category']).filter(Boolean))].sort();cats.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;$('category').appendChild(o)});setMetrics();applyFilters();setText('dataStatus','● Dataset loaded');$('csvCheck').textContent='Loaded successfully from '+DATA_URL;$('csvBadge').textContent='Loaded';$('csvBadge').className='tag green'}catch(e){setText('dataStatus','● Data unavailable');$('dataStatus').style.color='var(--danger)';$('rows').innerHTML='<tr><td colspan=\"7\" class=\"empty\">Could not load catalog data: '+esc(e.message)+'. Check the CSV path and hosting configuration.</td></tr>';setText('resultCount','Dataset unavailable');setText('csvCheck',e.message);$('csvBadge').textContent='Failed';$('csvBadge').className='tag amber'}}"
+new = "async function init(){try{setText('dataStatus','● Loading data');$('dataStatus').style.color='';setCheck('csvCheck','csvBadge','Checking','Checking the CSV file…','');setCheck('integrityCheck','integrityBadge','Checking','Waiting for catalog records','');setCheck('filterCheck','filterBadge','Checking','Waiting for the catalog data layer','');setCheck('responsiveCheck','responsiveBadge','Checking','Checking current viewport overflow','');setCheck('exportCheck','exportBadge','Checking','Checking browser download support','');setCheck('themeCheck','themeBadge','Checking','Checking theme control and local preference storage','');setCheck('navCheck','navBadge','Checking','Checking route and state controls','');setText('runtimeOverall','Checking');$('runtimeOverall').className='tag';const res=await fetch(DATA_URL,{cache:'no-store'});if(!res.ok)throw new Error('CSV returned HTTP '+res.status);const text=await res.text();const previousCategory=$('category').value;all=parseCSV(text);if(!all.length)throw new Error('The CSV was loaded but no valid bot records were parsed');const cats=[...new Set(all.map(b=>b['English Category']).filter(Boolean))].sort();$('category').innerHTML='<option value=\"\">All categories</option>';cats.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;$('category').appendChild(o)});if(cats.includes(previousCategory))$('category').value=previousCategory;setMetrics();applyFilters();setText('dataStatus','● Dataset loaded');runRuntimeChecks()}catch(e){setText('dataStatus','● Data unavailable');$('dataStatus').style.color='var(--danger)';$('rows').innerHTML='<tr><td colspan=\"7\" class=\"empty\">Could not load catalog data: '+esc(e.message)+'. Check the CSV path and hosting configuration.</td></tr>';setText('resultCount','Dataset unavailable');all=[];filtered=[];runRuntimeChecks();setCheck('csvCheck','csvBadge','Failed',e.message,'red');setText('runtimeOverall','Attention');$('runtimeOverall').className='tag red'}}"
+assert old in s
+s = s.replace(old, new, 1)
+
+assert "$('exportBtn').addEventListener('click',exportCSV);" in s
+s = s.replace("$('exportBtn').addEventListener('click',exportCSV);", "if($('exportBtn'))$('exportBtn').addEventListener('click',exportCSV);", 1)
+
+p.write_text(s, encoding='utf-8')
+print('Phase 3 System runtime patch applied')
