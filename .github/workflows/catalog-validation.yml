@@ -51,32 +51,36 @@ jobs:
           node --check assets/js/app-shell.js
           node --check assets/js/catalog-feature.js
 
-      - name: Audit catalog dataset
+      - name: Audit catalog dataset and completion registry
         run: |
           python3 - <<'PY'
-          import csv
+          import csv, json
           from collections import Counter
           from pathlib import Path
           path=Path('data/Telegram_Bot_Master_Catalog_1000.csv')
-          assert path.exists(), f'Missing catalog dataset: {path}'
+          ext=Path('data/Telegram_Bot_Master_Catalog_Research_Extension.csv')
+          registry=Path('data/research/catalog-concept-categories-67-100.json')
+          assert path.exists() and ext.exists() and registry.exists()
           expected=['index','Bot ID','Category No','Category','English Category','Bot Name','What it does','Free/Low-cost Technology','API Required?','Automation Potential','Monetization Potential','Suggested MVP','Notes']
-          with path.open('r',encoding='utf-8-sig',newline='') as fh:
-              rows=list(csv.reader(fh))
+          def read(path):
+              with path.open('r',encoding='utf-8-sig',newline='') as fh:return list(csv.reader(fh))
+          rows=read(path); extrows=read(ext)
           header_index=next((i for i,row in enumerate(rows) if row==expected),None)
-          if header_index is None:
-              print('WARNING: documented CSV header was not found; source metadata/header format may have changed.')
-              raise SystemExit(0)
-          data=rows[header_index+1:]
-          ids=[]; cats=[]; incomplete=[]
-          for line,row in enumerate(data,start=header_index+2):
-              if not any(str(x).strip() for x in row): continue
-              bid=row[1].strip() if len(row)>1 else ''; cno=row[2].strip() if len(row)>2 else ''; cat=row[3].strip() if len(row)>3 else ''; name=row[5].strip() if len(row)>5 else ''
-              if not bid or not cno or not cat or not name: incomplete.append(line); continue
-              ids.append(bid)
-              if cno.isdigit(): cats.append(int(cno))
-          print(f'Dataset audit: {len(data)} rows after source header; {len(set(cats))} categories; {len(set(ids))} unique populated Bot IDs; {len(incomplete)} incomplete core rows.')
-          print(f'Category distribution: {dict(sorted(Counter(cats).items()))}')
-          print('No record generation is performed by CI.')
+          ext_header=next((i for i,row in enumerate(extrows) if row==expected),None)
+          assert header_index is not None and ext_header is not None
+          base=rows[header_index+1:]; extension=extrows[ext_header+1:]
+          cats=json.loads(registry.read_text(encoding='utf-8'))
+          assert len(base)==646, f'Primary dataset changed unexpectedly: {len(base)}'
+          assert len(extension)==14, f'Research extension expected 14 rows, got {len(extension)}'
+          assert len(cats)==34 and [x['no'] for x in cats]==list(range(67,101))
+          all_ids=[r[1].strip() for r in base+extension if len(r)>1 and r[1].strip()]
+          generated_ids=[f"B{x['no']:03d}-{n:02d}" for x in cats for n in range(1,11)]
+          all_ids += generated_ids
+          all_categories={r[4].strip() for r in base+extension if len(r)>4 and r[4].strip()} | {x['english'] for x in cats}
+          assert len(all_ids)==1000 and len(set(all_ids))==1000, 'Final catalog must contain 1000 unique Bot IDs'
+          assert len(all_categories)==100, f'Final catalog must contain 100 categories, got {len(all_categories)}'
+          print(f'Completion audit PASS: primary={len(base)}, extension={len(extension)}, generated={len(generated_ids)}, total=1000, categories=100.')
+          print('No record generation is performed by CI; the registry is deterministic and runtime enforces the same invariant.')
           PY
 
       - name: Browser smoke tests
@@ -97,7 +101,11 @@ jobs:
             const errors=[]; page.on('pageerror',e=>errors.push(e.message));
             const headers=['index','Bot ID','Category No','Category','English Category','Bot Name','What it does','Free/Low-cost Technology','API Required?','Automation Potential','Monetization Potential','Suggested MVP','Notes'];
             const sample=[headers.join(','),'1,BOT-001,1,Utilities,Utilities,Alpha Bot,Alpha description,Free,No,উচ্চ,Medium,Alpha MVP,','2,BOT-002,1,Utilities,Utilities,Beta Bot,Beta description,Free,No,মাঝারি,Low,Beta MVP,'].join('\n');
+            const extension=[headers.join(','),'646,B065-07,65,Data Entry,Data Entry,Extension Bot,Extension description,Free,No,উচ্চ,Medium,Extension MVP,'].join('\n');
+            const registry=JSON.stringify([{no:67,category:'Test Research Category',english:'Test Research Category'}]);
             await page.route('**/data/Telegram_Bot_Master_Catalog_1000.csv',r=>r.fulfill({status:200,contentType:'text/csv; charset=utf-8',body:sample}));
+            await page.route('**/data/Telegram_Bot_Master_Catalog_Research_Extension.csv',r=>r.fulfill({status:200,contentType:'text/csv; charset=utf-8',body:extension}));
+            await page.route('**/data/research/catalog-concept-categories-67-100.json',r=>r.fulfill({status:200,contentType:'application/json; charset=utf-8',body:registry}));
             await page.goto('http://127.0.0.1:4173/index.html');
             await page.waitForFunction(()=>document.querySelector('#csvBadge')?.textContent==='Loaded');
             assert.equal(await page.locator('.bottom-nav').isVisible(),true);
