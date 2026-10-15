@@ -14,11 +14,10 @@ The target is **100 categories × 10 bot concepts = 1,000 catalog records**. Thi
 
 ## Completion structure
 
-- Existing audited dataset: 646 records / 65 categories.
-- Category 65 completion extension: +4 records.
-- Category 66: +10 records.
-- Categories 67–100: 34 × 10 = +340 concept records.
-- Final invariant: **1,000 unique records across exactly 100 categories**.
+- Source audit: 646 physical data rows, but the last row `B065-06` had only six of thirteen columns; the loader could parse only 645 complete records.
+- Repaired the existing `B065-06` record and added four more records to complete category 65.
+- Added categories 66–100 with ten distinct concept records per category.
+- Final CSV validation: **1,000 complete records, 1,000 unique IDs, 1,000 unique names, 100 categories, ten records per category, and no empty fields**.
 
 ## Important verification boundary
 
