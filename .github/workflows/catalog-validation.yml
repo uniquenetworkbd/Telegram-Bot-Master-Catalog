@@ -1,0 +1,83 @@
+name: Catalog validation
+
+on:
+  push:
+    branches:
+      - main
+      - phase-1-mobile-app-foundation
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate HTML structure and required mobile controls
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import re
+
+          source = Path("index.html").read_text(encoding="utf-8")
+
+          class Parser(HTMLParser):
+              def __init__(self):
+                  super().__init__(convert_charrefs=True)
+                  self.ids = set()
+                  self.html_open = 0
+                  self.html_close = 0
+                  self.script_open = 0
+                  self.script_close = 0
+              def handle_starttag(self, tag, attrs):
+                  attrs = dict(attrs)
+                  if "id" in attrs:
+                      if attrs["id"] in self.ids:
+                          raise AssertionError(f"Duplicate HTML id: {attrs['id']}")
+                      self.ids.add(attrs["id"])
+                  if tag == "html": self.html_open += 1
+                  if tag == "script": self.script_open += 1
+              def handle_endtag(self, tag):
+                  if tag == "html": self.html_close += 1
+                  if tag == "script": self.script_close += 1
+
+          parser = Parser()
+          parser.feed(source)
+          parser.close()
+          assert parser.html_open == 1 and parser.html_close == 1, "HTML root tags are missing or duplicated"
+          assert parser.script_open == parser.script_close, "Unbalanced script tags"
+          assert parser.script_open == 1, "Expected one inline application script"
+          required = [
+              "bottom-nav", "moreNavBtn", "moreMenu", "themeSelect",
+              "page-home", "page-dashboard", "page-catalog", "page-bot",
+              "page-profile", "page-system", "rows", "search", "category",
+              "api", "automation", "pageSize", "prev", "next"
+          ]
+          missing = sorted(set(required) - parser.ids)
+          assert not missing, f"Missing required element IDs: {missing}"
+          assert 'function restoreCatalogState()' in source, "Catalog state restore is missing"
+          assert "addEventListener('popstate'" in source, "Browser Back handling is missing"
+          assert "data-mobile-route" in source, "Mobile navigation controls are missing"
+          assert "id=\"themeSelect\"" in source, "Theme control is missing"
+          print(f"HTML checks passed: {len(parser.ids)} unique IDs; all six pages and mobile controls found.")
+          PY
+
+      - name: Validate inline JavaScript syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          source = Path("index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>", source, re.IGNORECASE)
+          assert len(scripts) == 1, f"Expected one inline script, found {len(scripts)}"
+          Path("/tmp/catalog-app.js").write_text(scripts[0], encoding="utf-8")
+          PY
+          node --check /tmp/catalog-app.js
