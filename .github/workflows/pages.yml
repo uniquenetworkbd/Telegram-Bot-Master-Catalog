@@ -18,6 +18,8 @@ concurrency:
 jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -38,3 +40,26 @@ jobs:
       - name: Deploy validated commit to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  live-browser-smoke:
+    name: Verify the deployed public website in Chromium
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out tested browser script
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --prefix /tmp/tbmc-browser playwright
+          /tmp/tbmc-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Run post-deployment live smoke test
+        env:
+          NODE_PATH: /tmp/tbmc-browser/node_modules
+          TBMC_LIVE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: node tests/live-smoke.cjs
