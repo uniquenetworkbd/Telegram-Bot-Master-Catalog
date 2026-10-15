@@ -126,8 +126,8 @@ jobs:
 
             await page.locator('#rows [data-bot="BOT-001"]').first().click();
             await page.locator('#page-bot').waitFor({ state: 'visible' });
-            await page.goBack();
-            await page.locator('#page-catalog').waitFor({ state: 'visible' });
+            await page.evaluate(() => history.back());
+            await page.waitForFunction(() => location.hash === '#catalog' && document.querySelector('#page-catalog')?.classList.contains('active'));
             assert.equal(await page.locator('#search').inputValue(), 'Alpha', 'search query should be restored after Back');
             await page.locator('#rows [data-bot="BOT-001"]').first().waitFor();
 
@@ -136,8 +136,8 @@ jobs:
             await page.locator('#page-system').waitFor({ state: 'visible' });
             await page.locator('#themeSelect').selectOption('light');
             assert.equal(await page.locator('html').getAttribute('data-theme'), 'light', 'Light theme should apply');
-            await page.goBack();
-            await page.locator('#page-catalog').waitFor({ state: 'visible' });
+            await page.evaluate(() => history.back());
+            await page.waitForFunction(() => location.hash === '#catalog' && document.querySelector('#page-catalog')?.classList.contains('active'));
             assert.equal(await page.locator('#moreMenu').evaluate(el => el.classList.contains('open')), true, 'Back from System should restore the More menu');
 
             assert.deepEqual(errors, [], 'browser console should not report uncaught page errors');
