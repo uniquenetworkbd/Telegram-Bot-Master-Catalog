@@ -1,0 +1,81 @@
+index,Bot ID,Category No,Category,English Category,Bot Name,What it does
+760,B077-01,77,অডিও, ভয়েস ও পডকাস্ট,Audio, Voice & Podcasting,অডিও, ভয়েস ও পডকাস্ট Info Bot,অডিও service ও podcast তথ্য দেয়।
+761,B077-02,77,অডিও, ভয়েস ও পডকাস্ট,Audio, Voice & Podcasting,অডিও, ভয়েস ও পডকাস্ট Tracker Bot,recording বা processing status ট্র্যাক করে।
+762,B077-03,77,অডিও, ভয়েস ও পডকাস্ট,Audio, Voice & Podcasting,অডিও, ভয়েস ও পডকাস্ট Manager Bot,voice ও audio asset ব্যবস্থাপনা করে।
+763,B077-04,77,অডিও, ভয়েস ও পডকাস্ট,Audio, Voice & Podcasting,অডিও, ভয়েস ও পডকাস্ট Reporter Bot,episode বা audio report তৈরি করে।
+764,B077-05,77,অডিও, ভয়েস ও পডকাস্ট,Audio, Voice & Podcasting,অডিও, ভয়েস ও পডকাস্ট Alert Bot,processing বা publishing alert দেয়।
+765,B077-06,77,অডিও, ভয়েস ও পডকাস্ট,Audio, Voice & Podcasting,অডিও, ভয়েস ও পডকাস্ট Analyzer Bot,audio metrics বিশ্লেষণ করে।
+766,B077-07,77,অডিও, ভয়েস ও পডকাস্ট,Audio, Voice & Podcasting,অডিও, ভয়েস ও পডকাস্ট Scheduler Bot,recording ও publishing schedule করে।
+767,B077-08,77,অডিও, ভয়েস ও পডকাস্ট,Audio, Voice & Podcasting,অডিও, ভয়েস ও পডকাস্ট Converter Bot,audio format ও bitrate রূপান্তর করে।
+768,B077-09,77,অডিও, ভয়েস ও পডকাস্ট,Audio, Voice & Podcasting,অডিও, ভয়েস ও পডকাস্ট Assistant Bot,voice workflow পরিচালনা করতে সহায়তা করে।
+769,B077-10,77,অডিও, ভয়েস ও পডকাস্ট,Audio, Voice & Podcasting,অডিও, ভয়েস ও পডকাস্ট Pro Bot,record,transcribe,convert ও publish workflow একত্র করে।
+770,B078-01,78,OCR ও ডকুমেন্ট এক্সট্রাকশন,OCR & Document Extraction,OCR ও ডকুমেন্ট এক্সট্রাকশন Info Bot,OCR ও document processing তথ্য দেয়।
+771,B078-02,78,OCR ও ডকুমেন্ট এক্সট্রাকশন,OCR & Document Extraction,OCR ও ডকুমেন্ট এক্সট্রাকশন Tracker Bot,document processing status ট্র্যাক করে।
+772,B078-03,78,OCR ও ডকুমেন্ট এক্সট্রাকশন,OCR & Document Extraction,OCR ও ডকুমেন্ট এক্সট্রাকশন Manager Bot,document jobs ও records ব্যবস্থাপনা করে।
+773,B078-04,78,OCR ও ডকুমেন্ট এক্সট্রাকশন,OCR & Document Extraction,OCR ও ডকুমেন্ট এক্সট্রাকশন Reporter Bot,extracted data report তৈরি করে।
+774,B078-05,78,OCR ও ডকুমেন্ট এক্সট্রাকশন,OCR & Document Extraction,OCR ও ডকুমেন্ট এক্সট্রাকশন Alert Bot,OCR error বা completion alert দেয়।
+775,B078-06,78,OCR ও ডকুমেন্ট এক্সট্রাকশন,OCR & Document Extraction,OCR ও ডকুমেন্ট এক্সট্রাকশন Analyzer Bot,document text ও metadata বিশ্লেষণ করে।
+776,B078-07,78,OCR ও ডকুমেন্ট এক্সট্রাকশন,OCR & Document Extraction,OCR ও ডকুমেন্ট এক্সট্রাকশন Scheduler Bot,batch OCR schedule করে।
+777,B078-08,78,OCR ও ডকুমেন্ট এক্সট্রাকশন,OCR & Document Extraction,OCR ও ডকুমেন্ট এক্সট্রাকশন Converter Bot,OCR outputকে CSV,JSON বা text-এ রূপান্তর করে।
+778,B078-09,78,OCR ও ডকুমেন্ট এক্সট্রাকশন,OCR & Document Extraction,OCR ও ডকুমেন্ট এক্সট্রাকশন Assistant Bot,document upload থেকে extraction পর্যন্ত সহায়তা করে।
+779,B078-10,78,OCR ও ডকুমেন্ট এক্সট্রাকশন,OCR & Document Extraction,OCR ও ডকুমেন্ট এক্সট্রাকশন Pro Bot,OCR,validation ও export workflow একত্র করে।
+780,B079-01,79,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো,Digital Signatures & Forms,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো Info Bot,form ও signing process তথ্য দেয়।
+781,B079-02,79,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো,Digital Signatures & Forms,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো Tracker Bot,form ও approval status ট্র্যাক করে।
+782,B079-03,79,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো,Digital Signatures & Forms,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো Manager Bot,form ও signer workflow ব্যবস্থাপনা করে।
+783,B079-04,79,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো,Digital Signatures & Forms,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো Reporter Bot,approval report তৈরি করে।
+784,B079-05,79,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো,Digital Signatures & Forms,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো Alert Bot,approval ও expiry alert পাঠায়।
+785,B079-06,79,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো,Digital Signatures & Forms,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো Analyzer Bot,form completion ও turnaround বিশ্লেষণ করে।
+786,B079-07,79,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো,Digital Signatures & Forms,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো Scheduler Bot,signature request schedule করে।
+787,B079-08,79,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো,Digital Signatures & Forms,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো Converter Bot,form dataকে export format-এ রূপান্তর করে।
+788,B079-09,79,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো,Digital Signatures & Forms,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো Assistant Bot,form fill ও submission workflow সহায়তা করে।
+789,B079-10,79,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো,Digital Signatures & Forms,ডিজিটাল স্বাক্ষর ও ফর্ম ওয়ার্কফ্লো Pro Bot,form,approval ও signing workflow একত্র করে।
+790,B080-01,80,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট,Notifications & Ambient Alerts,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট Info Bot,notification configuration তথ্য দেয়।
+791,B080-02,80,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট,Notifications & Ambient Alerts,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট Tracker Bot,event status ট্র্যাক করে।
+792,B080-03,80,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট,Notifications & Ambient Alerts,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট Manager Bot,notification rules ব্যবস্থাপনা করে।
+793,B080-04,80,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট,Notifications & Ambient Alerts,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট Reporter Bot,delivery report তৈরি করে।
+794,B080-05,80,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট,Notifications & Ambient Alerts,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট Alert Bot,নির্ধারিত event-এ alert পাঠায়।
+795,B080-06,80,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট,Notifications & Ambient Alerts,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট Analyzer Bot,notification engagement বিশ্লেষণ করে।
+796,B080-07,80,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট,Notifications & Ambient Alerts,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট Scheduler Bot,scheduled notifications পরিচালনা করে।
+797,B080-08,80,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট,Notifications & Ambient Alerts,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট Converter Bot,event payload format রূপান্তর করে।
+798,B080-09,80,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট,Notifications & Ambient Alerts,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট Assistant Bot,notification workflow তৈরি করতে সহায়তা করে।
+799,B080-10,80,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট,Notifications & Ambient Alerts,নোটিফিকেশন ও অ্যাম্বিয়েন্ট অ্যালার্ট Pro Bot,multi-channel notification workflow একত্র করে।
+800,B081-01,81,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন,RSS, News Feeds & Content Curation,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন Info Bot,ফিড ও content source তথ্য দেয়।
+801,B081-02,81,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন,RSS, News Feeds & Content Curation,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন Tracker Bot,নতুন feed item ট্র্যাক করে।
+802,B081-03,81,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন,RSS, News Feeds & Content Curation,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন Manager Bot,feed source ও rule ব্যবস্থাপনা করে।
+803,B081-04,81,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন,RSS, News Feeds & Content Curation,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন Reporter Bot,curated digest তৈরি করে।
+804,B081-05,81,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন,RSS, News Feeds & Content Curation,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন Alert Bot,breaking feed alert পাঠায়।
+805,B081-06,81,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন,RSS, News Feeds & Content Curation,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন Analyzer Bot,feed performance ও topic trends বিশ্লেষণ করে।
+806,B081-07,81,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন,RSS, News Feeds & Content Curation,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন Scheduler Bot,digest publishing schedule করে।
+807,B081-08,81,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন,RSS, News Feeds & Content Curation,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন Converter Bot,feed contentকে Telegram-ready format-এ রূপান্তর করে।
+808,B081-09,81,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন,RSS, News Feeds & Content Curation,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন Assistant Bot,source নির্বাচন ও digest তৈরিতে সহায়তা করে।
+809,B081-10,81,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন,RSS, News Feeds & Content Curation,RSS, নিউজ ফিড ও কনটেন্ট কিউরেশন Pro Bot,feed ingestion, filtering ও publishing একত্র করে।
+810,B082-01,82,সোশ্যাল মিডিয়া কনটেন্ট টুল,Social Media Content Tools,সোশ্যাল মিডিয়া কনটেন্ট টুল Info Bot,content format ও platform information দেয়।
+811,B082-02,82,সোশ্যাল মিডিয়া কনটেন্ট টুল,Social Media Content Tools,সোশ্যাল মিডিয়া কনটেন্ট টুল Tracker Bot,post বা campaign status ট্র্যাক করে।
+812,B082-03,82,সোশ্যাল মিডিয়া কনটেন্ট টুল,Social Media Content Tools,সোশ্যাল মিডিয়া কনটেন্ট টুল Manager Bot,content asset ও publishing queue ব্যবস্থাপনা করে।
+813,B082-04,82,সোশ্যাল মিডিয়া কনটেন্ট টুল,Social Media Content Tools,সোশ্যাল মিডিয়া কনটেন্ট টুল Reporter Bot,content performance report তৈরি করে।
+814,B082-05,82,সোশ্যাল মিডিয়া কনটেন্ট টুল,Social Media Content Tools,সোশ্যাল মিডিয়া কনটেন্ট টুল Alert Bot,post failure বা milestone alert দেয়।
+815,B082-06,82,সোশ্যাল মিডিয়া কনটেন্ট টুল,Social Media Content Tools,সোশ্যাল মিডিয়া কনটেন্ট টুল Analyzer Bot,engagement metrics বিশ্লেষণ করে।
+816,B082-07,82,সোশ্যাল মিডিয়া কনটেন্ট টুল,Social Media Content Tools,সোশ্যাল মিডিয়া কনটেন্ট টুল Scheduler Bot,content publishing schedule করে।
+817,B082-08,82,সোশ্যাল মিডিয়া কনটেন্ট টুল,Social Media Content Tools,সোশ্যাল মিডিয়া কনটেন্ট টুল Converter Bot,contentকে platform-specific format-এ রূপান্তর করে।
+818,B082-09,82,সোশ্যাল মিডিয়া কনটেন্ট টুল,Social Media Content Tools,সোশ্যাল মিডিয়া কনটেন্ট টুল Assistant Bot,caption ও publishing workflow সহায়তা করে।
+819,B082-10,82,সোশ্যাল মিডিয়া কনটেন্ট টুল,Social Media Content Tools,সোশ্যাল মিডিয়া কনটেন্ট টুল Pro Bot,content,analytics ও scheduling একত্র করে।
+820,B083-01,83,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট,YouTube & Video Channel Management,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট Info Bot,channel ও video information দেয়।
+821,B083-02,83,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট,YouTube & Video Channel Management,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট Tracker Bot,video বা subscriber changes ট্র্যাক করে।
+822,B083-03,83,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট,YouTube & Video Channel Management,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট Manager Bot,channel content workflow ব্যবস্থাপনা করে।
+823,B083-04,83,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট,YouTube & Video Channel Management,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট Reporter Bot,channel analytics report দেয়।
+824,B083-05,83,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট,YouTube & Video Channel Management,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট Alert Bot,new upload বা threshold alert পাঠায়।
+825,B083-06,83,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট,YouTube & Video Channel Management,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট Analyzer Bot,video performance বিশ্লেষণ করে।
+826,B083-07,83,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট,YouTube & Video Channel Management,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট Scheduler Bot,upload schedule পরিচালনা করে।
+827,B083-08,83,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট,YouTube & Video Channel Management,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট Converter Bot,video metadata ও format রূপান্তর করে।
+828,B083-09,83,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট,YouTube & Video Channel Management,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট Assistant Bot,channel management workflow সহায়তা করে।
+829,B083-10,83,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট,YouTube & Video Channel Management,YouTube ও ভিডিও চ্যানেল ম্যানেজমেন্ট Pro Bot,content,analytics ও scheduling একত্র করে।
+830,B084-01,84,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট,Podcast & Audio Content Management,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট Info Bot,episode ও podcast তথ্য দেয়।
+831,B084-02,84,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট,Podcast & Audio Content Management,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট Tracker Bot,episode release status ট্র্যাক করে।
+832,B084-03,84,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট,Podcast & Audio Content Management,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট Manager Bot,episode asset ব্যবস্থাপনা করে।
+833,B084-04,84,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট,Podcast & Audio Content Management,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট Reporter Bot,episode report ও digest দেয়।
+834,B084-05,84,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট,Podcast & Audio Content Management,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট Alert Bot,publish বা processing alert দেয়।
+835,B084-06,84,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট,Podcast & Audio Content Management,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট Analyzer Bot,listener ও episode metrics বিশ্লেষণ করে।
+836,B084-07,84,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট,Podcast & Audio Content Management,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট Scheduler Bot,episode production schedule করে।
+837,B084-08,84,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট,Podcast & Audio Content Management,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট Converter Bot,audio format ও transcript রূপান্তর করে।
+838,B084-09,84,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট,Podcast & Audio Content Management,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট Assistant Bot,episode preparation workflow সহায়তা করে।
+839,B084-10,84,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট,Podcast & Audio Content Management,পডকাস্ট ও অডিও কনটেন্ট ম্যানেজমেন্ট Pro Bot,record,edit,publish ও analytics একত্র করে।
