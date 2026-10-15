@@ -10,6 +10,7 @@ on:
     branches: [main]
     paths:
       - 'pages/**'
+      - 'assets/js/logs-audit.js'
       - 'docs/architecture/GITHUB-NATIVE-SERVER-SIDE-ARCHITECTURE-v1.0.md'
       - 'scripts/**'
       - '.github/workflows/github-native-platform.yml'
@@ -38,11 +39,16 @@ jobs:
           test -f pages/logs-audit.html
           test -f pages/privacy-data-controls.html
           grep -q "GitHub-native" pages/platform-status.html
-      - name: Validate Engine Manager script
-        run: node --check assets/js/engine-core.js
+          grep -q "LIVE GITHUB DATA" pages/logs-audit.html
+          grep -q "assets/js/logs-audit.js" pages/logs-audit.html
+      - name: Validate runtime scripts
+        run: |
+          node --check assets/js/engine-core.js
+          node --check assets/js/logs-audit.js
       - name: Report platform boundary
         run: |
           echo "GitHub-native platform audit passed."
           echo "External backend providers: none"
-          echo "Persistent browser visitor analytics: not claimed"
+          echo "Visitor analytics ingestion: not implemented or claimed"
+          echo "Live Logs & Audit data: public GitHub REST API"
           echo "Server-side automation: GitHub Actions"
