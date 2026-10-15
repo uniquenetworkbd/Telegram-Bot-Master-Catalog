@@ -67,6 +67,8 @@ readme = README.read_text(encoding="utf-8").casefold()
 html = HTML.read_text(encoding="utf-8").casefold()
 require("not a claim that every named record is an existing public telegram bot" in readme,
         "README must explicitly document that records are concepts, not verified live bots")
+require("content-security-policy" in html and "script-src 'self'" in html,
+        "A restrictive Content Security Policy must be present")
 require("not a verified directory of live telegram bots" in html,
         "Catalog UI must disclose concept-only scope")
 require("admin authentication" in html and "not implemented" in html,
@@ -78,6 +80,26 @@ print("INDEPENDENT CATALOG AUDIT: PASS")
 print("Records: 1000 | unique IDs: 1000 | unique names: 1000")
 print("Categories: 100 | exactly 10 records per category | blank required fields: 0")
 print("ID/category sequence: PASS | concept-only disclosure: PASS")
+# Scan repository text for common credential formats. This is a baseline secret scan, not a guarantee against every secret type.
+secret_patterns = {
+    "Telegram bot token": re.compile(r"\\b\\d{6,12}:[A-Za-z0-9_-]{30,}\\b"),
+    "GitHub token": re.compile(r"\\b(?:gh[pousr]_[A-Za-z0-9_]{30,}|github_pat_[A-Za-z0-9_]{30,})\\b"),
+    "AWS access key": re.compile(r"\\bAKIA[0-9A-Z]{16}\\b"),
+    "Private key": re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
+}
+secret_hits = []
+for candidate in ROOT.rglob("*"):
+    if not candidate.is_file() or ".git" in candidate.parts or "node_modules" in candidate.parts or candidate.stat().st_size > 2_000_000:
+        continue
+    try:
+        contents = candidate.read_text(encoding="utf-8")
+    except (UnicodeDecodeError, OSError):
+        continue
+    for label, pattern in secret_patterns.items():
+        if pattern.search(contents):
+            secret_hits.append(f"{label} pattern in {candidate.relative_to(ROOT)}")
+require(not secret_hits, "Potential committed secrets detected: " + "; ".join(secret_hits))
+
 # Static security guardrails: no inline HTML event handlers, remote scripts, eval, Function constructor, or document.write.
 from html.parser import HTMLParser
 class SecurityParser(HTMLParser):
@@ -98,5 +120,6 @@ for source_path in [ROOT / "assets/js/catalog-repository.js", ROOT / "assets/js/
     require(re.search(r"\bnew\s+Function\b", source) is None, f"Function constructor found in {source_path}")
     require(re.search(r"document\s*\.\s*write\s*\(", source) is None, f"document.write() found in {source_path}")
 
-print("Security static guardrails: PASS (local scripts only; no inline handlers/eval/Function/document.write)")
+print("Security static guardrails: PASS (CSP, local scripts only, no inline handlers/eval/Function/document.write)")
+print("Common credential-format scan: PASS (no matching token/private-key patterns found)")
 print("Security boundary disclosure (no backend/admin authentication): PASS")
