@@ -76,7 +76,7 @@ jobs:
           from pathlib import Path
           import re
           source = Path("index.html").read_text(encoding="utf-8")
-          scripts = re.findall(r"<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>", source, re.IGNORECASE)
+          scripts = re.findall(r"<script(?:\s[^>]*)?>([\s\S]*?)</script>", source, re.IGNORECASE)
           assert len(scripts) == 1, f"Expected one inline script, found {len(scripts)}"
           Path("/tmp/catalog-app.js").write_text(scripts[0], encoding="utf-8")
           PY
