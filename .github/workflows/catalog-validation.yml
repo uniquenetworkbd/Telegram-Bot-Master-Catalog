@@ -92,7 +92,7 @@ jobs:
             for(let cat=1;cat<=64;cat++) for(let n=1;n<=10;n++) primaryRows.push(csvRow(primaryRows.length+1,`B${String(cat).padStart(3,'0')}-${String(n).padStart(2,'0')}`,cat));
             for(let n=1;n<=6;n++) primaryRows.push(csvRow(primaryRows.length+1,`B065-${String(n).padStart(2,'0')}`,65));
             const sample=[headers.join(','),...primaryRows].join('\n');
-            const extensionRows=Array.from({length:14},(_,i)=>`${646+i},EXT-${String(i+1).padStart(3,'0')},${i<4?65:66},Extension ${i<4?65:66},Extension ${i<4?65:66},Extension Bot ${i+1},Extension description,Free,No,উচ্চ,Medium,Extension MVP,`);
+            const extensionRows=Array.from({length:14},(_,i)=>`${646+i},EXT-${String(i+1).padStart(3,'0')},${i<4?65:66},Extension ${i<4?65:66},Test Category ${i<4?65:66},Extension Bot ${i+1},Extension description,Free,No,উচ্চ,Medium,Extension MVP,`);
             const extension=[headers.join(','),...extensionRows].join('\n');
             const registry=JSON.stringify(Array.from({length:34},(_,i)=>({no:67+i,category:`Research ${67+i}`,english:`Research ${67+i}`})));
             await page.route('**/data/Telegram_Bot_Master_Catalog_1000.csv',r=>r.fulfill({status:200,contentType:'text/csv; charset=utf-8',body:sample}));
