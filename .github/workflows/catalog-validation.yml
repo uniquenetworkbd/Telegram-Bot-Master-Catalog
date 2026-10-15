@@ -82,3 +82,68 @@ jobs:
           Path("/tmp/catalog-app.js").write_text(scripts[0], encoding="utf-8")
           PY
           node --check /tmp/catalog-app.js
+      - name: Browser smoke tests (mobile navigation, search state and theme)
+        run: |
+          mkdir -p /tmp/tbmc-browser
+          npm install --prefix /tmp/tbmc-browser playwright
+          /tmp/tbmc-browser/node_modules/.bin/playwright install --with-deps chromium
+          python3 -m http.server 4173 >/tmp/tbmc-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:4173/index.html >/dev/null; then break; fi
+            sleep 1
+          done
+          cat > /tmp/tbmc-browser/smoke.cjs <<'JS'
+          const { chromium } = require('/tmp/tbmc-browser/node_modules/playwright');
+          const assert = require('node:assert/strict');
+
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+            const errors = [];
+            page.on('pageerror', error => errors.push(error.message));
+
+            const headers = ['index','Bot ID','Category No','Category','English Category','Bot Name','What it does','Free/Low-cost Technology','API Required?','Automation Potential','Monetization Potential','Suggested MVP','Notes'];
+            const sample = [
+              headers.join(','),
+              '1,BOT-001,1,Utilities,Utilities,Alpha Bot,Alpha description,Free,No,High,Medium,Alpha MVP,',
+              '2,BOT-002,1,Utilities,Utilities,Beta Bot,Beta description,Free,No,Medium,Low,Beta MVP,'
+            ].join('\n');
+
+            await page.route('**/data/Telegram_Bot_Master_Catalog_1000.csv', route =>
+              route.fulfill({ status: 200, contentType: 'text/csv; charset=utf-8', body: sample })
+            );
+
+            await page.goto('http://127.0.0.1:4173/index.html');
+            await page.locator('#csvBadge').getByText('Loaded').waitFor({ timeout: 10000 });
+            assert.equal(await page.locator('.bottom-nav').isVisible(), true, 'mobile bottom navigation should be visible');
+
+            await page.locator('[data-mobile-route="catalog"]').click();
+            await page.locator('#search').fill('Alpha');
+            await page.locator('#rows [data-bot="BOT-001"]').first().waitFor();
+            assert.equal(await page.locator('#matchStat').textContent(), '1', 'search should return one matching record');
+
+            await page.locator('#rows [data-bot="BOT-001"]').first().click();
+            await page.locator('#page-bot').waitFor({ state: 'visible' });
+            await page.goBack();
+            await page.locator('#page-catalog').waitFor({ state: 'visible' });
+            assert.equal(await page.locator('#search').inputValue(), 'Alpha', 'search query should be restored after Back');
+            await page.locator('#rows [data-bot="BOT-001"]').first().waitFor();
+
+            await page.locator('#moreNavBtn').click();
+            await page.locator('#moreMenu a[data-route="system"]').click();
+            await page.locator('#page-system').waitFor({ state: 'visible' });
+            await page.locator('#themeSelect').selectOption('light');
+            assert.equal(await page.locator('html').getAttribute('data-theme'), 'light', 'Light theme should apply');
+            await page.goBack();
+            await page.locator('#page-catalog').waitFor({ state: 'visible' });
+            assert.equal(await page.locator('#moreMenu').evaluate(el => el.classList.contains('open')), true, 'Back from System should restore the More menu');
+
+            assert.deepEqual(errors, [], 'browser console should not report uncaught page errors');
+            await browser.close();
+            console.log('Browser smoke tests passed: mobile nav, CSV-backed search, details/back state, More menu restoration and theme selection.');
+          })().catch(error => { console.error(error); process.exit(1); });
+          JS
+          node /tmp/tbmc-browser/smoke.cjs
+
