@@ -3,8 +3,10 @@ name: Catalog validation
 on:
   push:
     branches:
+      - main
       - phase-1-mobile-app-foundation
       - phase-1-mobile-app-foundation-v2
+      - phase-4c-4d-live-audit
   pull_request:
     branches:
       - main
@@ -25,7 +27,6 @@ jobs:
           python3 - <<'PY'
           from html.parser import HTMLParser
           from pathlib import Path
-          import re
 
           source = Path("index.html").read_text(encoding="utf-8")
 
@@ -71,6 +72,60 @@ jobs:
           print(f"HTML checks passed: {len(parser.ids)} unique IDs; all six pages and mobile controls found.")
           PY
 
+      - name: Audit catalog dataset and report findings
+        run: |
+          python3 - <<'PY'
+          import csv
+          from collections import Counter
+          from pathlib import Path
+
+          path = Path("data/Telegram_Bot_Master_Catalog_1000.csv")
+          if not path.exists():
+              raise SystemExit(f"ERROR: missing catalog dataset: {path}")
+
+          expected = [
+              "index", "Bot ID", "Category No", "Category", "English Category",
+              "Bot Name", "What it does", "Free/Low-cost Technology", "API Required?",
+              "Automation Potential", "Monetization Potential", "Suggested MVP", "Notes"
+          ]
+
+          try:
+              with path.open("r", encoding="utf-8-sig", newline="") as fh:
+                  reader = csv.reader(fh)
+                  header = next(reader, [])
+                  rows = list(reader)
+          except Exception as exc:
+              print(f"WARNING: CSV parser could not fully parse the dataset: {exc}")
+              raise SystemExit(0)
+
+          if header != expected:
+              print(f"WARNING: CSV header differs from the documented schema: {header!r}")
+
+          ids = []
+          category_numbers = []
+          incomplete = []
+          for line_no, row in enumerate(rows, start=2):
+              bot_id = row[1].strip() if len(row) > 1 else ""
+              category_no = row[2].strip() if len(row) > 2 else ""
+              category = row[3].strip() if len(row) > 3 else ""
+              bot_name = row[5].strip() if len(row) > 5 else ""
+              if not bot_id or not category_no or not category or not bot_name:
+                  incomplete.append(line_no)
+                  continue
+              ids.append(bot_id)
+              if category_no.isdigit():
+                  category_numbers.append(int(category_no))
+              else:
+                  print(f"WARNING: non-numeric Category No at line {line_no}: {category_no!r}")
+
+          duplicates = len(ids) - len(set(ids))
+          counts = Counter(category_numbers)
+          print(f"Dataset audit: {len(rows)} data rows; {len(set(category_numbers))} categories; {len(set(ids))} unique populated Bot IDs.")
+          print(f"Incomplete core rows: {len(incomplete)}; duplicate Bot IDs: {duplicates}.")
+          print(f"Category distribution: {dict(sorted(counts.items()))}")
+          print("The planned 1,000 records / 100 categories target is informational and is not used to fabricate or reject partial catalog data.")
+          PY
+
       - name: Validate inline JavaScript syntax
         run: |
           python3 - <<'PY'
@@ -82,6 +137,7 @@ jobs:
           Path("/tmp/catalog-app.js").write_text(scripts[0], encoding="utf-8")
           PY
           node --check /tmp/catalog-app.js
+
       - name: Browser smoke tests (mobile navigation, search state and theme)
         run: |
           mkdir -p /tmp/tbmc-browser
@@ -146,4 +202,3 @@ jobs:
           })().catch(error => { console.error(error); process.exit(1); });
           JS
           node /tmp/tbmc-browser/smoke.cjs
-
