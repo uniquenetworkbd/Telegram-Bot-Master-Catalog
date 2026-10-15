@@ -47,8 +47,27 @@ async function main() {
     assert.match(await page.locator('body').innerText(), /Admin authentication[\s\S]*Not implemented/i);
     const widths = await page.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
     assert.ok(widths.doc <= widths.inner + 4 && widths.body <= widths.inner + 4, `Mobile overflow: ${JSON.stringify(widths)}`);
-    assert.deepEqual(pageErrors, [], 'Live page has uncaught JavaScript errors');
-    assert.deepEqual(badResponses, [], 'Live page has HTTP errors');
+    const auditPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    auditPage.on('pageerror', e => pageErrors.push('Logs & Audit: ' + e.message));
+    auditPage.on('response', r => {
+      if (r.url().startsWith(new URL(BASE).origin) && r.status() >= 400) badResponses.push(`${r.status()} ${r.url()}`);
+    });
+    await auditPage.goto(new URL('pages/logs-audit.html', BASE).href, { waitUntil: 'networkidle', timeout: 30000 });
+    assert.match(await auditPage.locator('h1').textContent(), /Logs & Audit/i);
+    assert.match(await auditPage.locator('body').innerText(), /LIVE GITHUB DATA/i);
+    await auditPage.waitForFunction(() => {
+      const workflows = document.querySelector('#workflowList');
+      const commits = document.querySelector('#commitList');
+      return workflows?.querySelector('.audit-item, .audit-empty') && commits?.querySelector('.audit-item, .audit-empty');
+    }, null, { timeout: 20000 });
+    assert.ok(await auditPage.locator('#workflowList .audit-item').count() > 0, 'Live workflow runs were not rendered');
+    assert.ok(await auditPage.locator('#commitList .audit-item').count() > 0, 'Live commits were not rendered');
+    await auditPage.locator('#auditFilter').selectOption('success');
+    assert.ok(await auditPage.locator('#workflowList .audit-item').count() > 0, 'Workflow status filter returned no successful runs');
+    const auditWidths = await auditPage.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
+    assert.ok(auditWidths.doc <= auditWidths.inner + 4 && auditWidths.body <= auditWidths.inner + 4, `Logs & Audit mobile overflow: ${JSON.stringify(auditWidths)}`);
+    assert.deepEqual(pageErrors, [], 'Live pages have uncaught JavaScript errors');
+    assert.deepEqual(badResponses, [], 'Live site pages have HTTP errors');
 
     console.log('LIVE DEPLOYMENT BROWSER SMOKE: PASS');
     console.log(`URL: ${page.url()} | loaded records: 1000 | categories: 100`);
