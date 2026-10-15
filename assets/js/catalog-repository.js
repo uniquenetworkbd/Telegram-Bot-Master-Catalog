@@ -2,7 +2,7 @@
   const HEADERS=['index','Bot ID','Category No','Category','English Category','Bot Name','What it does','Free/Low-cost Technology','API Required?','Automation Potential','Monetization Potential','Suggested MVP','Notes'];
   const DATA_URL='./data/Telegram_Bot_Master_Catalog_1000.csv';
   function parseCSV(text){
-    const lines=text.replace(/^\\uFEFF/,'').split(/\\r?\\n/).filter(Boolean),records=[];
+    const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(Boolean),records=[];
     for(const line of lines){
       if(line.startsWith('<PARSED FROM SHEET:')||line.startsWith('<PARSED TEXT FOR SHEET:')||line.startsWith('TAB NAME:'))continue;
       const row=[];let cell='',quoted=false;
