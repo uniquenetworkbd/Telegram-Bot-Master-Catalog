@@ -1,0 +1,48 @@
+name: GitHub-native platform maintenance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '17 0 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'pages/**'
+      - 'docs/architecture/GITHUB-NATIVE-SERVER-SIDE-ARCHITECTURE-v1.0.md'
+      - 'scripts/**'
+      - '.github/workflows/github-native-platform.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  platform-audit:
+    name: GitHub-native platform audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate dedicated platform pages
+        run: |
+          test -f pages/engine-manager.html
+          test -f pages/platform-status.html
+          test -f pages/visitor-analytics.html
+          test -f pages/users-accounts.html
+          test -f pages/activity-history.html
+          test -f pages/logs-audit.html
+          test -f pages/privacy-data-controls.html
+          grep -q "GitHub-native" pages/platform-status.html
+      - name: Validate Engine Manager script
+        run: node --check assets/js/engine-core.js
+      - name: Report platform boundary
+        run: |
+          echo "GitHub-native platform audit passed."
+          echo "External backend providers: none"
+          echo "Persistent browser visitor analytics: not claimed"
+          echo "Server-side automation: GitHub Actions"
