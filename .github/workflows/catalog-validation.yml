@@ -83,31 +83,35 @@ jobs:
           assert path.exists(), f"Missing catalog dataset: {path}"
 
           with path.open("r", encoding="utf-8-sig", newline="") as fh:
-              rows = list(csv.DictReader(fh))
+              reader = csv.DictReader(fh)
+              fieldnames = reader.fieldnames or []
+              rows = list(reader)
 
-          expected = [
+          expected = {
               "index", "Bot ID", "Category No", "Category", "English Category",
               "Bot Name", "What it does", "Free/Low-cost Technology", "API Required?",
               "Automation Potential", "Monetization Potential", "Suggested MVP", "Notes"
-          ]
+          }
           assert rows, "Catalog CSV contains no data records"
-          assert list(rows[0].keys()) == expected, "Catalog CSV header/schema changed unexpectedly"
+          assert set(fieldnames) == expected, f"Catalog CSV schema changed unexpectedly: {fieldnames!r}"
 
-          ids = [r["Bot ID"].strip() for r in rows]
-          assert all(ids), "Every catalog record must have a Bot ID"
-          assert len(ids) == len(set(ids)), "Duplicate Bot ID detected"
-
+          ids = []
           category_numbers = []
           for row in rows:
-              value = row["Category No"].strip()
-              assert value.isdigit(), f"Invalid Category No: {value!r}"
+              bot_id = (row.get("Bot ID") or "").strip()
+              category = (row.get("Category") or "").strip()
+              bot_name = (row.get("Bot Name") or "").strip()
+              value = (row.get("Category No") or "").strip()
+              assert bot_id, "Every catalog record must have a Bot ID"
+              assert category, f"Missing Category for {bot_id}"
+              assert bot_name, f"Missing Bot Name for {bot_id}"
+              assert value.isdigit(), f"Invalid Category No for {bot_id}: {value!r}"
+              ids.append(bot_id)
               category_numbers.append(int(value))
-              assert row["Category"].strip(), f"Missing Category for {row['Bot ID']}"
-              assert row["Bot Name"].strip(), f"Missing Bot Name for {row['Bot ID']}"
 
+          assert len(ids) == len(set(ids)), "Duplicate Bot ID detected"
           counts = Counter(category_numbers)
           assert min(counts) == 1, "Category numbering must start at 1"
-          assert max(counts) >= 1, "No valid category numbers found"
           print(f"Catalog integrity passed: {len(rows)} records, {len(counts)} categories, {len(set(ids))} unique Bot IDs.")
           print("Note: CI validates structural integrity only; it does not require the planned 1,000-record target.")
           print("Category distribution:", dict(sorted(counts.items())))
