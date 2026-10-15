@@ -1,1 +1,28 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10172a"><title>Logs & Audit · Telegram Bot Master Catalog</title><link rel="stylesheet" href="../assets/css/app.css"></head><body><main style="max-width:1180px;margin:0 auto;padding:28px 18px"><a class="button" href="../index.html#system">← System</a><div class="pagehead" style="margin-top:20px"><div><div class="eyebrow">Observability and governance</div><h1>Logs & Audit</h1><p>Dedicated operational logs, security records and administrative audit boundary.</p></div><span class="tag amber">PLANNED</span></div><div class="card"><h2>GitHub-native sources</h2><p class="sub">Commits, pull requests, workflow runs and deployment records are the current durable GitHub-native audit sources. They are not mixed with visitor analytics.</p></div><div class="card" style="margin-top:15px"><h2>Planned separation</h2><p class="sub">Application errors, security events, administrative actions, deployment events and audit records will have separate schemas and retention rules.</p></div></main></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10172a"><title>Logs & Audit · Telegram Bot Master Catalog</title>
+<link rel="stylesheet" href="../assets/css/app.css">
+<style>
+.audit-wrap{max-width:1180px;margin:0 auto;padding:28px 18px}.audit-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:18px 0}.audit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}.audit-list{display:grid;gap:10px}.audit-item{border:1px solid var(--border,#29344c);border-radius:12px;padding:13px;overflow-wrap:anywhere}.audit-item h3{font-size:1rem;margin:0 0 6px}.audit-item p{margin:5px 0}.audit-meta{font-size:.84rem;opacity:.78}.audit-status{display:inline-block;border-radius:999px;padding:3px 8px;font-size:.75rem;font-weight:700;background:#27334a}.audit-status.success{background:#153d31;color:#a7f3d0}.audit-status.failure{background:#4a2027;color:#fecaca}.audit-status.pending{background:#493b1d;color:#fde68a}.audit-empty{padding:18px;border:1px dashed var(--border,#29344c);border-radius:12px}.audit-toolbar button{cursor:pointer}.audit-note{margin-top:14px}
+</style>
+</head>
+<body>
+<main class="audit-wrap">
+<a class="button" href="../index.html#system">← System</a>
+<div class="pagehead" style="margin-top:20px"><div><div class="eyebrow">GitHub-native observability</div><h1>Logs &amp; Audit</h1><p>Live read-only view of public repository workflow runs and commit history.</p></div><span class="tag green">LIVE GITHUB DATA</span></div>
+<div class="audit-toolbar">
+<button class="button" id="auditRefresh" type="button">Refresh data</button>
+<label for="auditFilter">Workflow status</label>
+<select id="auditFilter"><option value="all">All statuses</option><option value="success">Success</option><option value="failure">Failure</option><option value="pending">In progress / queued</option></select>
+<span id="auditUpdated" class="audit-meta" aria-live="polite">Waiting for GitHub API…</span>
+</div>
+<div class="audit-grid">
+<section class="card"><h2>Recent workflow runs</h2><p class="sub">GitHub Actions execution records. Select a run to open its GitHub details.</p><div id="workflowList" class="audit-list" aria-live="polite"><div class="audit-empty">Loading workflow runs…</div></div></section>
+<section class="card"><h2>Recent repository commits</h2><p class="sub">Source-change history from the public repository. Commit details open on GitHub.</p><div id="commitList" class="audit-list" aria-live="polite"><div class="audit-empty">Loading commits…</div></div></section>
+</div>
+<section class="card audit-note"><h2>Data boundary</h2><p class="sub">This page reads public GitHub REST API data directly. It does not collect visitor activity, expose credentials, or claim to display private application/security logs. GitHub Actions runs and repository commits are the currently available durable audit sources. API limits or network failures are shown explicitly.</p></section>
+</main>
+<script src="../assets/js/logs-audit.js"></script>
+</body></html>
