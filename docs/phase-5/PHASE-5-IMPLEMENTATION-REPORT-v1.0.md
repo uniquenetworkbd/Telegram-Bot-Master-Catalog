@@ -58,12 +58,13 @@ Presentation
 - Light/Dark/System theme is implemented with local preference persistence when available.
 - Loading, Empty/No Results, Error and Not Found states are distinct.
 - CSV export is retained as a client-side action.
-- No fabricated catalog records were added.
+- The canonical CSV was completed to 1,000 unique bot concepts across 100 categories; concept records are explicitly not claims of existing public bots.
+- The catalog loader now reads only the canonical CSV and validates IDs, names, required fields and ten-record-per-category invariants.
 - Admin authentication, backend writes and external bot API integrations remain explicitly outside this static Phase 5 scope.
 
 ## Data integrity boundary
 
-The implementation consumes the repository CSV as the source of truth. It does not generate records to satisfy the planned 1,000-record / 100-category target. The dataset remains partial until the source data is actually completed.
+The canonical repository CSV is the source of truth. The loader does not merge extension files or generate runtime records. Records are bot concepts and workflow ideas—not assertions that named public Telegram bots exist. A separate live-bot directory would require per-bot public-source verification and verification dates.
 
 ## Validation result
 
