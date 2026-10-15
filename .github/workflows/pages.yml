@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_sha == github.sha }}
     outputs:
       page_url: ${{ steps.deployment.outputs.page_url }}
     environment:
