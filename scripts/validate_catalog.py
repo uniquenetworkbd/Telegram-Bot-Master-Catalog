@@ -82,9 +82,9 @@ print("Categories: 100 | exactly 10 records per category | blank required fields
 print("ID/category sequence: PASS | concept-only disclosure: PASS")
 # Scan repository text for common credential formats. This is a baseline secret scan, not a guarantee against every secret type.
 secret_patterns = {
-    "Telegram bot token": re.compile(r"\\b\\d{6,12}:[A-Za-z0-9_-]{30,}\\b"),
-    "GitHub token": re.compile(r"\\b(?:gh[pousr]_[A-Za-z0-9_]{30,}|github_pat_[A-Za-z0-9_]{30,})\\b"),
-    "AWS access key": re.compile(r"\\bAKIA[0-9A-Z]{16}\\b"),
+    "Telegram bot token": re.compile(r"\b\d{6,12}:[A-Za-z0-9_-]{30,}\b"),
+    "GitHub token": re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9_]{30,}|github_pat_[A-Za-z0-9_]{30,})\b"),
+    "AWS access key": re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     "Private key": re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
 }
 secret_hits = []
