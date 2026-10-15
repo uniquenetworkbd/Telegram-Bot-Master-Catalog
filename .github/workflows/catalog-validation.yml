@@ -3,8 +3,10 @@ name: Catalog validation
 on:
   push:
     branches:
+      - main
       - phase-1-mobile-app-foundation
       - phase-1-mobile-app-foundation-v2
+      - phase-4c-4d-live-audit
   pull_request:
     branches:
       - main
@@ -25,7 +27,6 @@ jobs:
           python3 - <<'PY'
           from html.parser import HTMLParser
           from pathlib import Path
-          import re
 
           source = Path("index.html").read_text(encoding="utf-8")
 
@@ -71,6 +72,47 @@ jobs:
           print(f"HTML checks passed: {len(parser.ids)} unique IDs; all six pages and mobile controls found.")
           PY
 
+      - name: Validate catalog CSV structure and integrity
+        run: |
+          python3 - <<'PY'
+          import csv
+          from collections import Counter
+          from pathlib import Path
+
+          path = Path("data/Telegram_Bot_Master_Catalog_1000.csv")
+          assert path.exists(), f"Missing catalog dataset: {path}"
+
+          with path.open("r", encoding="utf-8-sig", newline="") as fh:
+              rows = list(csv.DictReader(fh))
+
+          expected = [
+              "index", "Bot ID", "Category No", "Category", "English Category",
+              "Bot Name", "What it does", "Free/Low-cost Technology", "API Required?",
+              "Automation Potential", "Monetization Potential", "Suggested MVP", "Notes"
+          ]
+          assert rows, "Catalog CSV contains no data records"
+          assert list(rows[0].keys()) == expected, "Catalog CSV header/schema changed unexpectedly"
+
+          ids = [r["Bot ID"].strip() for r in rows]
+          assert all(ids), "Every catalog record must have a Bot ID"
+          assert len(ids) == len(set(ids)), "Duplicate Bot ID detected"
+
+          category_numbers = []
+          for row in rows:
+              value = row["Category No"].strip()
+              assert value.isdigit(), f"Invalid Category No: {value!r}"
+              category_numbers.append(int(value))
+              assert row["Category"].strip(), f"Missing Category for {row['Bot ID']}"
+              assert row["Bot Name"].strip(), f"Missing Bot Name for {row['Bot ID']}"
+
+          counts = Counter(category_numbers)
+          assert min(counts) == 1, "Category numbering must start at 1"
+          assert max(counts) >= 1, "No valid category numbers found"
+          print(f"Catalog integrity passed: {len(rows)} records, {len(counts)} categories, {len(set(ids))} unique Bot IDs.")
+          print("Note: CI validates structural integrity only; it does not require the planned 1,000-record target.")
+          print("Category distribution:", dict(sorted(counts.items())))
+          PY
+
       - name: Validate inline JavaScript syntax
         run: |
           python3 - <<'PY'
@@ -82,6 +124,7 @@ jobs:
           Path("/tmp/catalog-app.js").write_text(scripts[0], encoding="utf-8")
           PY
           node --check /tmp/catalog-app.js
+
       - name: Browser smoke tests (mobile navigation, search state and theme)
         run: |
           mkdir -p /tmp/tbmc-browser
@@ -146,4 +189,3 @@ jobs:
           })().catch(error => { console.error(error); process.exit(1); });
           JS
           node /tmp/tbmc-browser/smoke.cjs
-
