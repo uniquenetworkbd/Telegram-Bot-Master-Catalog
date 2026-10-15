@@ -27,6 +27,7 @@ jobs:
         run: |
           node --check assets/js/catalog-repository.js
           node --check assets/js/app-shell.js
+          node --check assets/js/engine-core.js
           node --check assets/js/catalog-feature.js
 
   browser-regression:
