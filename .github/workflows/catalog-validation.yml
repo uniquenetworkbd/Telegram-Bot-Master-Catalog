@@ -55,32 +55,19 @@ jobs:
         run: |
           python3 - <<'PY'
           import csv, json
-          from collections import Counter
           from pathlib import Path
-          path=Path('data/Telegram_Bot_Master_Catalog_1000.csv')
-          ext=Path('data/Telegram_Bot_Master_Catalog_Research_Extension.csv')
-          registry=Path('data/research/catalog-concept-categories-67-100.json')
-          assert path.exists() and ext.exists() and registry.exists()
+          path=Path('data/Telegram_Bot_Master_Catalog_1000.csv'); ext=Path('data/Telegram_Bot_Master_Catalog_Research_Extension.csv'); registry=Path('data/research/catalog-concept-categories-67-100.json')
           expected=['index','Bot ID','Category No','Category','English Category','Bot Name','What it does','Free/Low-cost Technology','API Required?','Automation Potential','Monetization Potential','Suggested MVP','Notes']
           def read(path):
               with path.open('r',encoding='utf-8-sig',newline='') as fh:return list(csv.reader(fh))
           rows=read(path); extrows=read(ext)
-          header_index=next((i for i,row in enumerate(rows) if row==expected),None)
-          ext_header=next((i for i,row in enumerate(extrows) if row==expected),None)
-          assert header_index is not None and ext_header is not None
-          base=rows[header_index+1:]; extension=extrows[ext_header+1:]
-          cats=json.loads(registry.read_text(encoding='utf-8'))
-          assert len(base)==646, f'Primary dataset changed unexpectedly: {len(base)}'
-          assert len(extension)==14, f'Research extension expected 14 rows, got {len(extension)}'
-          assert len(cats)==34 and [x['no'] for x in cats]==list(range(67,101))
-          all_ids=[r[1].strip() for r in base+extension if len(r)>1 and r[1].strip()]
-          generated_ids=[f"B{x['no']:03d}-{n:02d}" for x in cats for n in range(1,11)]
-          all_ids += generated_ids
-          all_categories={r[4].strip() for r in base+extension if len(r)>4 and r[4].strip()} | {x['english'] for x in cats}
-          assert len(all_ids)==1000 and len(set(all_ids))==1000, 'Final catalog must contain 1000 unique Bot IDs'
-          assert len(all_categories)==100, f'Final catalog must contain 100 categories, got {len(all_categories)}'
-          print(f'Completion audit PASS: primary={len(base)}, extension={len(extension)}, generated={len(generated_ids)}, total=1000, categories=100.')
-          print('No record generation is performed by CI; the registry is deterministic and runtime enforces the same invariant.')
+          hi=next(i for i,row in enumerate(rows) if row==expected); ei=next(i for i,row in enumerate(extrows) if row==expected)
+          base=rows[hi+1:]; extension=extrows[ei+1:]; cats=json.loads(registry.read_text(encoding='utf-8'))
+          assert len(base)==646 and len(extension)==14 and len(cats)==34 and [x['no'] for x in cats]==list(range(67,101))
+          ids=[r[1].strip() for r in base+extension if len(r)>1 and r[1].strip()]+[f"B{x['no']:03d}-{n:02d}" for x in cats for n in range(1,11)]
+          category_set={r[4].strip() for r in base+extension if len(r)>4 and r[4].strip()}|{x['english'] for x in cats}
+          assert len(ids)==1000 and len(set(ids))==1000 and len(category_set)==100
+          print('Completion audit PASS: primary=646, extension=14, generated=340, total=1000, categories=100.')
           PY
 
       - name: Browser smoke tests
@@ -101,8 +88,9 @@ jobs:
             const errors=[]; page.on('pageerror',e=>errors.push(e.message));
             const headers=['index','Bot ID','Category No','Category','English Category','Bot Name','What it does','Free/Low-cost Technology','API Required?','Automation Potential','Monetization Potential','Suggested MVP','Notes'];
             const sample=[headers.join(','),'1,BOT-001,1,Utilities,Utilities,Alpha Bot,Alpha description,Free,No,উচ্চ,Medium,Alpha MVP,','2,BOT-002,1,Utilities,Utilities,Beta Bot,Beta description,Free,No,মাঝারি,Low,Beta MVP,'].join('\n');
-            const extension=[headers.join(','),'646,B065-07,65,Data Entry,Data Entry,Extension Bot,Extension description,Free,No,উচ্চ,Medium,Extension MVP,'].join('\n');
-            const registry=JSON.stringify([{no:67,category:'Test Research Category',english:'Test Research Category'}]);
+            const extensionRows=Array.from({length:14},(_,i)=>`${646+i},EXT-${String(i+1).padStart(3,'0')},${i<4?65:66},Extension,Extension,Extension Bot ${i+1},Extension description,Free,No,উচ্চ,Medium,Extension MVP,`);
+            const extension=[headers.join(','),...extensionRows].join('\n');
+            const registry=JSON.stringify(Array.from({length:34},(_,i)=>({no:67+i,category:`Research ${67+i}`,english:`Research ${67+i}`})));
             await page.route('**/data/Telegram_Bot_Master_Catalog_1000.csv',r=>r.fulfill({status:200,contentType:'text/csv; charset=utf-8',body:sample}));
             await page.route('**/data/Telegram_Bot_Master_Catalog_Research_Extension.csv',r=>r.fulfill({status:200,contentType:'text/csv; charset=utf-8',body:extension}));
             await page.route('**/data/research/catalog-concept-categories-67-100.json',r=>r.fulfill({status:200,contentType:'application/json; charset=utf-8',body:registry}));
