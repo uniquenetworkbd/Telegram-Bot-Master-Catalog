@@ -54,7 +54,7 @@ Presentation
 - Pagination supports 25/50/100 rows.
 - Bot Details supports direct `#bot/<Bot ID>` routes.
 - Catalog state is persisted in session storage and restored after navigation where available.
-- Browser Back is handled through history state.
+- Browser Back is handled through hash history.
 - Light/Dark/System theme is implemented with local preference persistence when available.
 - Loading, Empty/No Results, Error and Not Found states are distinct.
 - CSV export is retained as a client-side action.
@@ -65,10 +65,21 @@ Presentation
 
 The implementation consumes the repository CSV as the source of truth. It does not generate records to satisfy the planned 1,000-record / 100-category target. The dataset remains partial until the source data is actually completed.
 
-## Validation
+## Validation result
 
-The validation workflow is updated to understand the modular external CSS/JavaScript structure and to run HTML structure checks, JavaScript syntax checks, dataset audit and mobile browser smoke tests.
+Latest head: `7ecb03273528cffe890aca6865bb4374ef8f1740`  
+Catalog validation run: `38675456143` / run #39  
+Result: **PASS**
+
+Passed checks:
+
+1. Phase 5 HTML/module wiring
+2. External JavaScript syntax
+3. Catalog dataset audit
+4. Mobile browser smoke tests
+
+The browser smoke path covers mobile navigation, search, sort/filter controls, Bot Details routing, Back/state restoration, More → System → theme, Not Found handling and uncaught page-error detection.
 
 ## Release boundary
 
-Phase 5 implementation is prepared on branch `phase-5-implementation-v1`. Deployment to the production/default branch is intentionally not claimed by this report; deployment remains a separate release decision.
+Phase 5 implementation is prepared on branch `phase-5-implementation-v1` and is available for review in PR #8. Production/default-branch deployment is intentionally not claimed; deployment remains a separate release decision.
