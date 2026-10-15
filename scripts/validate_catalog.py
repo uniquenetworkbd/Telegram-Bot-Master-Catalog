@@ -111,7 +111,7 @@ class SecurityParser(HTMLParser):
             self.scripts.append(attrs.get("src", ""))
         self.inline_handlers.extend(k for k in attrs if k.lower().startswith("on"))
 p = SecurityParser(); p.feed(HTML.read_text(encoding="utf-8")); p.close()
-require(p.scripts == ["./assets/js/catalog-repository.js", "./assets/js/app-shell.js", "./assets/js/catalog-feature.js"],
+require(p.scripts == ["./assets/js/catalog-repository.js", "./assets/js/app-shell.js", "./assets/js/engine-core.js", "./assets/js/catalog-feature.js"],
         f"Unexpected script sources: {p.scripts}")
 require(not p.inline_handlers, f"Inline event handlers are disallowed: {p.inline_handlers}")
 for source_path in [ROOT / "assets/js/catalog-repository.js", ROOT / "assets/js/app-shell.js", ROOT / "assets/js/catalog-feature.js"]:
