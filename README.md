@@ -14,8 +14,9 @@ A mobile-first, data-driven catalog interface for exploring Telegram bot concept
 ## Product blueprints
 
 - [Phase 2 — Mobile User Journey Blueprint v1.0](docs/blueprints/PHASE-2-MOBILE-USER-JOURNEY-BLUEPRINT-v1.0.md)
+- [Phase 4 — Interactive Prototype](docs/phase-4/README.md)
 
-The Phase 2 blueprint defines page responsibilities, navigation, search/filter/sort semantics, state restoration, theme behavior, error handling, and acceptance criteria. It is a design contract; it does not imply every planned feature is already implemented.
+Phase 4 defines the modular architecture boundaries, module registry, six-page interaction contracts, data-source independence rules, prototype data separation, and acceptance criteria. It is an explicit design/interaction contract; it does not claim that a production backend, authentication system, or Telegram API integration exists.
 
 ## Data integrity
 
