@@ -40,7 +40,7 @@ async function main() {
     assert.equal(await page.locator('#dashTotal').textContent(), '1,000');
     assert.equal(await page.locator('#dashCats').textContent(), '100');
 
-    await page.locator('[data-go="catalog"]').click();
+    await page.locator("#page-dashboard [data-go=\"catalog\"]").click();
     await page.waitForFunction(() => document.querySelectorAll('#category option').length === 101);
     const firstCategory = await page.locator('#category option').nth(1).getAttribute('value');
     await page.locator('#category').selectOption(firstCategory);
