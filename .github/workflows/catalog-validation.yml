@@ -116,7 +116,7 @@ jobs:
             );
 
             await page.goto('http://127.0.0.1:4173/index.html');
-            await page.locator('#csvBadge').getByText('Loaded').waitFor({ timeout: 10000 });
+            await page.waitForFunction(() => document.querySelector('#csvBadge')?.textContent === 'Loaded', null, { timeout: 10000 });
             assert.equal(await page.locator('.bottom-nav').isVisible(), true, 'mobile bottom navigation should be visible');
 
             await page.locator('[data-mobile-route="catalog"]').click();
