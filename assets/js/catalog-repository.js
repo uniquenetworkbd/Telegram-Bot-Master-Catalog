@@ -41,5 +41,5 @@
   function isApi(v){const s=String(v||'').trim().toLowerCase();return s==='yes'||s.startsWith('yes')||s.includes('হ্যাঁ')}
   function categoryCounts(records){return records.reduce((m,b)=>{const k=b['English Category']||'Uncategorized';m[k]=(m[k]||0)+1;return m},{});}
   function automationCounts(records){const m={'উচ্চ':0,'মাঝারি':0,'নিম্ন':0,'Other / unspecified':0};records.forEach(b=>{const v=String(b['Automation Potential']||'').trim();if(Object.prototype.hasOwnProperty.call(m,v))m[v]++;else m['Other / unspecified']++});return m;}
-  window.TBMC=window.TBMC||{};window.TBMC.catalogRepository={DATA_URL,EXTENSION_URL,CATEGORY_REGISTRY_URL,HEADERS,load,isApi,categoryCounts,automationCounts};
+  window.TBMC=window.TBMC||{};window.TBMC.catalogRepository={DATA_URL,HEADERS,load,isApi,categoryCounts,automationCounts};
 })();
