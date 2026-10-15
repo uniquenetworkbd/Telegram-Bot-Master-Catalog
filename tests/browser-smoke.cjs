@@ -82,6 +82,20 @@ async function main() {
     await page.locator('#moreNavBtn').click();
     await page.locator('#moreMenu a[data-route="system"]').click();
     assert.equal(await page.locator('#systemRecords').textContent(), '1,000');
+    assert.ok(await page.evaluate(() => Boolean(window.TBMC && window.TBMC.engineCore)), 'Main Engine runtime should be exposed');
+    const engineIds = await page.evaluate(() => window.TBMC.engineCore.listEngines().map(engine => engine.id));
+    for (const requiredEngine of ['main-engine', 'engine-registry', 'catalog-data', 'catalog-ui', 'local-activity']) {
+      assert.ok(engineIds.includes(requiredEngine), 'Missing registered engine: ' + requiredEngine);
+    }
+    assert.ok(await page.locator('#tbmc-engine-list .metarow').count() >= 5, 'Engine Manager should list registered engines');
+    assert.equal(await page.locator('#tbmc-diagnostics-toggle').isChecked(), false, 'Local diagnostics must be off by default');
+    await page.locator('#tbmc-diagnostics-toggle').check();
+    const localActivity = await page.evaluate(() => JSON.parse(sessionStorage.getItem('tbmc-local-activity-v1') || '[]'));
+    assert.ok(localActivity.length >= 1, 'Explicit opt-in should enable local activity events');
+    assert.ok(localActivity.every(event => ['page_view','catalog_search_used','bot_details_opened'].includes(event.type)), 'Local activity should use allowlisted event types');
+    assert.ok(localActivity.every(event => !('query' in event) && !('botId' in event) && !('ip' in event)), 'Local activity must not store search terms, bot IDs or IP addresses');
+    await page.locator('#tbmc-diagnostics-toggle').uncheck();
+    assert.equal(await page.evaluate(() => sessionStorage.getItem('tbmc-local-activity-v1')), null, 'Opt-out should clear local session activity');
     assert.equal(await page.locator('#systemCategories').textContent(), '100');
     assert.notEqual(await page.locator('#csvBadge').textContent(), 'Failed');
     assert.notEqual(await page.locator('#runtimeOverall').textContent(), 'Attention');
