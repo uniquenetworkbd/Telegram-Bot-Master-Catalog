@@ -2,6 +2,8 @@ name: GitHub-native platform maintenance
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
   schedule:
     - cron: '17 0 * * *'
   push:
@@ -30,6 +32,11 @@ jobs:
         run: |
           test -f pages/engine-manager.html
           test -f pages/platform-status.html
+          test -f pages/visitor-analytics.html
+          test -f pages/users-accounts.html
+          test -f pages/activity-history.html
+          test -f pages/logs-audit.html
+          test -f pages/privacy-data-controls.html
           grep -q "GitHub-native" pages/platform-status.html
       - name: Validate Engine Manager script
         run: node --check assets/js/engine-core.js
