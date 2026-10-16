@@ -277,6 +277,9 @@ These validators check only the documented fields needed by current publishers. 
 ## 7. Storage, Catalog, Search, History, Analytics, Logging, Security, Admin, System
 
 ### Storage and Catalog
+- `assets/js/catalog-repository.js` now shares one in-flight/successful dataset-load Promise across callers; `load({ force: true })` requests a fresh load. Failed loads clear the cache so retry is possible.
+- `assets/js/main-engine.js` registers and starts a managed Storage Engine that validates the canonical 1,000-record/100-category dataset, then a managed Catalog Engine that depends on Storage.
+- Main Engine bootstrap is idempotent, exposes runtime information, publishes typed startup/readiness/failure/shutdown events, and can stop managed Catalog and Storage Engines in dependent-first order.
 - Storage owns CSV fetch, parse, schema validation, normalized record access, and dataset metadata.
 - Catalog owns record/category domain access, details lookup, summary and export semantics.
 - Search must not parse the physical CSV itself.
@@ -327,8 +330,9 @@ The repository previously had a 44-tracked-file mapping. This table identifies t
 | Priority | Source/path | Target owner | Migration rule |
 |---|---|---|---|
 | P0 | `assets/js/engine-core.js` | Main Engine, legacy registry, Event Bus | Preserve legacy registry/event API; provide combined runtime snapshots and safe refresh hook |
-| P0 | `assets/js/module-manager.js` | Module Manager | New managed registry, dependency graph, lifecycle, health and cleanup; new-format definitions only |
-| P0 | `index.html` | Runtime bootstrap / Presentation | Load order: catalog repository → app shell → engine core → Module Manager → Catalog feature → shared navigation |
+| P0 | `assets/js/module-manager.js` | Module Manager | Managed registry, dependency graph, lifecycle, health and cleanup |
+| P0 | `assets/js/main-engine.js` | Main Engine | Idempotent bootstrap/readiness, Storage→Catalog startup, runtime status and managed-engine shutdown |
+| P0 | `index.html` | Runtime bootstrap / Presentation | Load order: repository → app shell → Engine Core → Module Manager → Catalog feature → Main Engine → shared navigation |
 | P0 | `assets/js/catalog-repository.js` | Storage Engine | Preserve public methods and CSV validation |
 | P0 | `assets/js/catalog-feature.js` | Catalog/Search UI adapter, metrics presentation | Move behavior only after API/call-site inventory |
 | P0 | `data/Telegram_Bot_Master_Catalog_1000.csv` | Storage data source | No content changes in engine migration |
@@ -554,7 +558,9 @@ The migration is complete only when all conditions are evidenced:
 - [x] First bounded implementation change completed: backward-compatible Event Schema Registry in `assets/js/engine-core.js`.
 - [x] Module Manager implementation merged in PR #20: `assets/js/module-manager.js`, runtime script integration, combined System registry snapshots, lifecycle/dependency browser tests, and CI syntax checks.
 - [x] Module Manager static/data checks and browser regression passed on code/test commit `ac38067666f2d3f0656207ac5ad76ffc8a0288ac`: Catalog validation run [38852328985](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38852328985), platform audit run [38852328926](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38852328926).
-- [x] Built-in Event Bus schema registration implemented in `assets/js/engine-core.js`; browser assertions added for valid/invalid built-in payloads. Current PR #21 CI is the acceptance gate for this slice.
+- [x] Built-in Event Bus schemas for current runtime events merged in PR #21; valid/invalid payload checks passed in the PR browser regression.
+- [x] Main Engine implementation started in branch `main-engine-bootstrap-v1`: idempotent bootstrap/readiness/shutdown API, managed Storage→Catalog startup, cached catalog loading, runtime event schemas and browser acceptance tests.
+- [ ] Main Engine bootstrap, lifecycle, and regression CI passed on the current branch.
 - [x] Catalog data/static validation passed in workflow run [38851503758](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38851503758).
 - [x] Browser regression passed in the same run: Chromium, Firefox and WebKit; 1,000 records / 100 categories; search/filter/details/history/pagination/export/theme/System/XSS checks; mobile 390px and desktop 1440px; zero uncaught page errors and local HTTP errors.
 - [x] Platform audit passed in workflow run [38851503827](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38851503827) after correcting stale checks for absent, unapproved pages.
@@ -562,4 +568,4 @@ The migration is complete only when all conditions are evidenced:
 
 **Current state:** the source, tests, workflow correction and master plan are in PR #19. CI passed on the current code/test commit; live deployment is not yet claimed because the PR has not been merged and the live URL has not been verified.
 
-**Next action:** validate PR #21's built-in event schemas, then implement Main Engine bootstrap/readiness/shutdown and continue one Engine migration at a time. Complete the remaining tracked-file inventory before broad Catalog/Storage/Search extraction. No additional contract/architecture documents are to be created; update this master plan only when a decision genuinely changes.
+**Next action:** validate Main Engine bootstrap/readiness/shutdown in PR #22, then migrate existing Catalog/Search/History/Analytics behavior into managed Engine boundaries one at a time. Complete the remaining tracked-file inventory before broad feature extraction. No additional contract/architecture documents are to be created; update this master plan only when a decision genuinely changes.
