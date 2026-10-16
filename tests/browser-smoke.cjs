@@ -100,6 +100,40 @@ async function main() {
     for (const requiredEngine of ['main-engine', 'engine-registry', 'catalog-data', 'catalog-ui', 'local-activity']) {
       assert.ok(engineIds.includes(requiredEngine), 'Missing registered engine: ' + requiredEngine);
     }
+    // Preserve the current synchronous Event Bus API before refactoring it.
+    const eventContract = await page.evaluate(() => {
+      const core = window.TBMC.engineCore;
+      const name = 'test.compatibility_probe';
+      const seen = [];
+      const payload = { probe: true };
+      const offExact = core.subscribe(name, event => seen.push('exact:' + event.type));
+      const offWildcard = core.subscribe('*', event => seen.push('wildcard:' + event.type));
+      const event = core.publish(name, payload);
+      offExact();
+      offWildcard();
+      let invalidCallback = '';
+      try { core.subscribe('test.invalid_callback', null); } catch (error) { invalidCallback = error.name; }
+      let duplicateEngine = '';
+      try { core.register({ id: 'main-engine', name: 'Duplicate' }); } catch (error) { duplicateEngine = error.message; }
+      return {
+        keys: Object.keys(event).sort(),
+        type: event.type,
+        timestampValid: !Number.isNaN(Date.parse(event.at)),
+        payloadSame: event.payload === payload,
+        frozen: Object.isFrozen(event),
+        seen,
+        invalidCallback,
+        duplicateEngine
+      };
+    });
+    assert.deepEqual(eventContract.keys, ['at', 'payload', 'type']);
+    assert.equal(eventContract.type, 'test.compatibility_probe');
+    assert.equal(eventContract.timestampValid, true);
+    assert.equal(eventContract.payloadSame, true);
+    assert.equal(eventContract.frozen, true);
+    assert.deepEqual(eventContract.seen, ['exact:test.compatibility_probe', 'wildcard:test.compatibility_probe']);
+    assert.equal(eventContract.invalidCallback, 'TypeError');
+    assert.match(eventContract.duplicateEngine, /Duplicate engine id/);
     assert.match(await page.locator('#page-profile').innerText(), /Admin authentication is not implemented/i);
     assert.doesNotMatch(await page.locator('body').innerText(), /Data unavailable/i, 'Healthy system must not report unavailable data');
     const configPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
