@@ -71,10 +71,13 @@ require("content-security-policy" in html and "script-src 'self'" in html,
         "A restrictive Content Security Policy must be present")
 require("not a verified directory of live telegram bots" in html,
         "Catalog UI must disclose concept-only scope")
-require('id="systemmenutoggle"' in html and 'id="systemsubmenu"' in html,
-        "Primary navigation must contain a System parent and a nested submenu")
-for label in ["system configuration", "logs &amp; audit", "version logs", "live information"]:
-    require(label in html, f"System submenu must include {label}")
+nav_source = (ROOT / "assets" / "js" / "global-bottom-nav.js").read_text(encoding="utf-8").casefold()
+require("tbmc-bottom-navigation" in nav_source and "tbmc-system-toggle" in nav_source and "tbmc-system-links" in nav_source,
+        "Shared bottom navigation must contain a System parent and nested submenu")
+for label in ["system configuration", "logs & audit", "version logs", "live information"]:
+    require(label in nav_source, f"Shared System submenu must include {label}")
+require('class="sidebar"' not in html and 'class="bottom-nav"' not in html and 'id="moremenu"' not in html,
+        "Legacy duplicate navigation must be removed from the main page")
 require('id="page-system"' not in html,
         "System must be a navigation group, not a separate hub page")
 profile_html = (ROOT / "pages" / "admin-profile.html").read_text(encoding="utf-8").casefold() if (ROOT / "pages" / "admin-profile.html").exists() else html
