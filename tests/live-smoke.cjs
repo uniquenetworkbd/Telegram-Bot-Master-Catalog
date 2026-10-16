@@ -42,6 +42,7 @@ async function main() {
     assert.ok(widths.doc <= widths.inner + 4 && widths.body <= widths.inner + 4, `Mobile overflow: ${JSON.stringify(widths)}`);
     assert.equal(await page.locator('#page-system').count(), 0, 'System must be a navigation group, not a separate hub page');
     assert.equal(await page.locator('#tbmcUnifiedNavigation').count(), 1, 'Shared bottom navigation module must load');
+    assert.equal(await page.locator('.system-subnav').count(), 0, 'Legacy top System submenu must be removed');
     await page.locator('.tbmc-bottom-toggle').click();
     assert.equal(await page.locator('#tbmcBottomPanel').isVisible(), true, 'Main navigation panel must open');
     assert.equal(await page.locator('#tbmcSystemLinks a').count(), 4, 'System submenu must expose four links');
@@ -68,6 +69,7 @@ async function main() {
       await modulePage.goto(new URL(path, BASE).href, { waitUntil: 'networkidle', timeout: 30000 });
       assert.match(await modulePage.locator('h1').textContent(), new RegExp(heading, 'i'));
       assert.equal(await modulePage.locator('#tbmcUnifiedNavigation').count(), 1, path + ': shared navigation missing');
+      assert.equal(await modulePage.locator('.system-subnav').count(), 0, path + ': legacy top System submenu must be removed');
       await modulePage.locator('.tbmc-bottom-toggle').click();
       assert.equal(await modulePage.locator('#tbmcSystemLinks a').count(), 4, path + ': System submenu links missing');
       const moduleWidths = await modulePage.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
@@ -127,6 +129,7 @@ async function main() {
       await modulePage.goto(new URL(path, BASE).href, { waitUntil: 'networkidle', timeout: 30000 });
       assert.equal((await modulePage.locator('h1').innerText()).trim(), heading, path + ': wrong heading');
       assert.equal(await modulePage.locator('#tbmcUnifiedNavigation').count(), 1, path + ': shared bottom navigation missing');
+      assert.equal(await modulePage.locator('.system-subnav').count(), 0, path + ': legacy top System submenu must be removed');
       const viewport = await modulePage.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
       assert.ok(viewport.doc <= viewport.inner + 4 && viewport.body <= viewport.inner + 4, path + ': mobile overflow ' + JSON.stringify(viewport));
       if (path.includes('engine-manager')) {
