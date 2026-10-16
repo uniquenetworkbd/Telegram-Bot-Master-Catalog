@@ -42,6 +42,9 @@ Implemented in source:
 - Catalog Query module command contract and bounded five-result response.
 - Node.js smoke runner using environment variables and Telegram's `sendMessage` API.
 - Manual GitHub Actions workflow for the smoke test.
+- Node.js `getUpdates` poller and `catalog-query` module for `/start`, `/help`, and `/search`.
+- Scheduled GitHub Actions workflow (five-minute best-effort cadence) with update-offset artifacts and no raw-message persistence.
+- Automated CSV parser and Telegram module contract tests.
 
 Not implemented or not yet verified:
 - No bot token/chat ID has been supplied through repository settings by this code change.
