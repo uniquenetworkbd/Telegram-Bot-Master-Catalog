@@ -24,6 +24,8 @@ test('OTP challenge is time-limited, attempt-limited and bound to Telegram ident
   assert.match(worker, /request\.headers\.get\("origin"\) !== env\.ALLOWED_ORIGIN/);
   assert.match(worker, /telegram_user_id/);
   assert.match(worker, /otpHash\(env, challengeId, otp\)/);
+  assert.match(worker, /status='otp_sent' AND expires_at>\?/);
+  assert.match(worker, /CHALLENGE_ALREADY_USED/);
 });
 
 test('Session tokens are HttpOnly/Secure and server-side hashes are stored', () => {
