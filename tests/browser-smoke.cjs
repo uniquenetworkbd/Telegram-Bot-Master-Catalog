@@ -119,7 +119,12 @@ async function main() {
       assert.equal(await modulePage.locator('#tbmcUnifiedNavigation').count(), 1, 'Standalone pages must load the shared bottom navigation');
       await modulePage.locator('.tbmc-bottom-toggle').click();
       assert.equal(await modulePage.locator('#tbmcSystemLinks a').count(), 4, 'Shared System submenu must be available on standalone pages');
-      if (path.includes('version-logs')) assert.match(await modulePage.locator('body').innerText(), /Documented versions[\s\S]*Latest version[\s\S]*v8\.2\.4/i);
+      if (path.includes('version-logs')) {
+        assert.equal(await modulePage.locator('#releaseCount').textContent(), '2', 'Release count must match the numbered ledger');
+        assert.equal(await modulePage.locator('#releaseLatest').textContent(), 'v1.0.1', 'Latest version must match the newest release');
+        assert.equal(await modulePage.locator('.release-card').count(), 2, 'Only documented release records should be shown');
+        assert.match(await modulePage.locator('#releaseList').innerText(), /#001 · v1\\.0\\.0[\\s\\S]*#002 · v1\\.0\\.1/);
+      }
       if (path.includes('live-information')) assert.match(await modulePage.locator('body').innerText(), /Global visitor count[\s\S]*Unavailable/i);
       await modulePage.close();
     }
