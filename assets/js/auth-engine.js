@@ -143,7 +143,7 @@
       clearChallenge();
       setStatus('OTP verified. Your secure session is active.', 'success');
       const destination = new URLSearchParams(window.location.search).get('next');
-      const safeDestination = destination && destination.startsWith('/') && !destination.startsWith('//') ? destination : '/';
+      const safeDestination = destination && destination.startsWith('./') && !destination.startsWith('//') ? destination : './index.html';
       window.location.assign(safeDestination);
       return result;
     } catch (error) {
@@ -154,7 +154,8 @@
   async function logout() {
     if (logoutButton) setBusy(logoutButton, true, 'Signing out…');
     try {
-      if (apiBase) await request('/api/auth/logout', { method: 'POST', body: {} });
+      if (!apiBase) throw Object.assign(new Error('AUTH_BACKEND_NOT_CONFIGURED'), { code: 'AUTH_BACKEND_NOT_CONFIGURED' });
+      await request('/api/auth/logout', { method: 'POST', body: {} });
       setStatus('Signed out. This browser session has been cleared by the authentication service.', 'success');
       window.location.assign('./login.html');
     } catch (error) {
