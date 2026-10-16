@@ -1,16 +1,47 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#10172a"><title>Engine Manager · Telegram Bot Master Catalog</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10172a">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'self'; form-action 'self'; object-src 'none'">
+<title>Engine Manager · Telegram Bot Master Catalog</title>
 <link rel="stylesheet" href="../assets/css/app.css">
-<style>.standalone{max-width:1180px;margin:0 auto;padding:28px 18px}.standalone nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}.standalone h1{margin-bottom:8px}.back{display:inline-block;margin-bottom:20px}.engine{margin:12px 0}.engine .sub{margin-top:4px}.status{display:inline-block}.note{margin-top:16px}</style>
-</head><body><main class="standalone">
+<style>
+.standalone{max-width:1180px;margin:0 auto;padding:28px 18px}
+.standalone h1{margin-bottom:8px}.back{display:inline-block;margin-bottom:20px}
+.engine{margin:0;min-width:0}.engine .sub{margin-top:5px;overflow-wrap:anywhere}
+.engine-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+.engine-actions .button{min-height:40px}.engine-actions .button:disabled{opacity:.48;cursor:not-allowed}
+.runtime-summary{margin:14px 0}.notice-result{min-height:24px;margin:10px 0}
+</style>
+</head>
+<body>
+<main class="standalone">
 <a class="button back" href="../index.html#system">← System</a>
-<div class="pagehead"><div><div class="eyebrow">Platform runtime</div><h1>Engine Manager</h1><p>Dedicated engine registry and health view. This page reads the browser Main Engine runtime.</p></div><span class="tag green">GitHub Pages runtime</span></div>
-<div id="engines"><div class="card empty">Loading runtime registry…</div></div>
-<div class="card note"><h2>Runtime boundary</h2><p class="sub">Engines shown here are browser runtime modules. GitHub Pages does not provide a persistent server process or database for this page. Server-side controls will be implemented only through GitHub-native workflows/repository data; no external platform is introduced.</p></div>
+<div class="pagehead"><div><div class="eyebrow">Platform runtime</div><h1>Engine Manager</h1><p>Live browser-runtime registry, health overview and local lifecycle controls.</p></div><span id="runtime-status" class="tag amber">Starting</span></div>
+<div class="notice runtime-summary" id="runtime-summary" aria-live="polite">Initializing the browser runtime…</div>
+<div class="notice" id="operation-result" aria-live="polite">Lifecycle controls affect this browser session only. They do not change GitHub, other visitors' sessions, or a server.</div>
+<div class="card note"><h2>Telegram Bot Engine boundary</h2><p id="bot-module-summary" class="sub">Loading Bot Engine module registry…</p><p class="sub">Telegram credentials are never exposed to browser code. The manual Telegram API smoke test runs through GitHub Actions using repository secrets and variables.</p></div>
+<div id="engines" aria-live="polite"><div class="card empty">Loading runtime registry…</div></div>
+<div class="card note"><h2>Runtime and security boundary</h2><p class="sub">These controls call the browser Module Manager. They are not authenticated server administration and have no effect beyond this browser runtime. Health checks are diagnostic signals, not proof of complete security or WCAG conformance.</p></div>
 </main>
-<script src="../assets/js/engine-core.js"></script><script>
-addEventListener('DOMContentLoaded',()=>{const box=document.getElementById('engines');const render=()=>{const api=window.TBMC&&window.TBMC.engineCore;if(!api){box.innerHTML='<div class="card"><strong>Runtime unavailable</strong></div>';return}box.innerHTML='<div class="grid split">'+api.listEngines().map(e=>'<div class="card engine"><div class="runtime-headline"><div><strong>'+esc(e.name)+'</strong><p>'+esc(e.id)+' · v'+esc(e.version)+'</p></div><span class="tag '+(e.health.status==='healthy'?'green':'amber')+'">'+esc(e.health.status)+'</span></div><p>'+esc(e.description)+'</p><div class="sub">Dependencies: '+esc(e.dependencies.join(', ')||'None')+'</div><div class="sub">Capabilities: '+esc(e.capabilities.join(' · ')||'—')+'</div></div>').join('')+'</div>'};render();window.TBMC.engineCore.subscribe('engine.registered',render)});function esc(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-</script><script src="../assets/js/global-bottom-nav.js"></script></body></html>
+<script src="../assets/js/catalog-repository.js"></script>
+<script src="../assets/js/app-shell.js"></script>
+<script src="../assets/js/engine-core.js"></script>
+<script src="../assets/js/history-engine.js"></script>
+<script src="../assets/js/module-manager.js"></script>
+<script src="../assets/js/search-engine.js"></script>
+<script src="../assets/js/analytics-engine.js"></script>
+<script src="../assets/js/logging-engine.js"></script>
+<script src="../assets/js/security-engine.js"></script>
+<script src="../assets/js/admin-engine.js"></script>
+<script src="../assets/js/system-engine.js"></script>
+<script src="../assets/js/bot-engine.js"></script>
+<script src="../assets/js/bot-modules/catalog-query.js"></script>
+<script src="../assets/js/catalog-feature.js"></script>
+<script src="../assets/js/main-engine.js"></script>
+<script src="../assets/js/engine-manager-page.js"></script>
+<script src="../assets/js/global-bottom-nav.js"></script>
+</body>
+</html>

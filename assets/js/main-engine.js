@@ -272,9 +272,11 @@
         start: async () => {},
         healthCheck: async () => {
           const capabilities = window.TBMC.adminEngine.getCapabilities();
-          return capabilities.profilePageAvailable && capabilities.authenticationConfigured === false
-            ? { status: 'healthy', detail: 'Static profile is available; authenticated administration is explicitly not configured' }
-            : { status: 'unhealthy', detail: 'Admin profile capability state is inconsistent' };
+          return capabilities.mode === 'static-project-profile' &&
+            capabilities.authenticationConfigured === false &&
+            capabilities.serverAuthorizationEnforced === false
+            ? { status: 'healthy', detail: 'Static-project capability contract is consistent; authenticated administration is explicitly not configured' }
+            : { status: 'unhealthy', detail: 'Admin capability boundary is inconsistent' };
         },
         stop: async () => {},
         destroy: async () => {}
@@ -309,6 +311,43 @@
     });
   }
 
+  function ensureBotEngine() {
+    if (manager.getEngine('bot-engine')) return;
+    manager.register({
+      id: 'bot-engine',
+      name: 'Bot Engine',
+      version: VERSION,
+      contractVersion: VERSION,
+      description: 'Registers bot modules and dispatches Telegram updates through injected services; no bot token is exposed to the browser.',
+      dependencies: [
+        { id: 'storage-engine', version: '^1.0.0' },
+        { id: 'security-engine', version: '^1.0.0' }
+      ],
+      capabilities: ['bot module registry', 'Telegram update contract', 'catalog query module'],
+      provides: ['bot.module-registry', 'bot.update-dispatch'],
+      publishes: ['bot.module_registered'],
+      subscribes: [],
+      lifecycle: {
+        validate: () => Boolean(window.TBMC.botEngine &&
+          typeof window.TBMC.botEngine.listModules === 'function' &&
+          typeof window.TBMC.botEngine.dispatch === 'function' &&
+          window.TBMC.botEngine.listModules().some(module => module.id === 'catalog-query')),
+        init: async () => {},
+        start: async () => {},
+        healthCheck: async () => {
+          const api = window.TBMC.botEngine;
+          const status = api && api.getStatus();
+          const moduleReady = api && api.listModules().some(module => module.id === 'catalog-query');
+          return status && moduleReady && status.tokenAvailableToBrowser === false
+            ? { status: 'healthy', detail: 'Bot module registry and Catalog Query contract are available; Telegram credentials remain outside the browser' }
+            : { status: 'unhealthy', detail: 'Bot module contract is missing or violates the credential boundary' };
+        },
+        stop: async () => {},
+        destroy: async () => {}
+      }
+    });
+  }
+
   async function bootstrap() {
     if (state.status === 'ready' || state.status === 'degraded') return runtimeInfo();
     if (state.bootstrapPromise) return state.bootstrapPromise;
@@ -328,14 +367,16 @@
       ensureSecurityEngine();
       ensureAdminEngine();
       ensureSystemEngine();
+      ensureBotEngine();
       await manager.start('catalog-engine');
       await manager.start('history-engine');
       await manager.start('analytics-engine');
       await manager.start('admin-engine');
       await manager.start('system-engine');
+      await manager.start('bot-engine');
       const storage = manager.getEngine('storage-engine');
       const catalog = manager.getEngine('catalog-engine');
-      const requiredIds = ['storage-engine', 'search-engine', 'catalog-engine', 'history-engine', 'analytics-engine', 'logging-engine', 'security-engine', 'admin-engine', 'system-engine'];
+      const requiredIds = ['storage-engine', 'search-engine', 'catalog-engine', 'history-engine', 'analytics-engine', 'logging-engine', 'security-engine', 'admin-engine', 'system-engine', 'bot-engine'];
       const required = requiredIds.map(id => manager.getEngine(id));
       const unhealthy = required.filter(engine => !engine || !['active', 'degraded'].includes(engine.state) || !['healthy', 'degraded'].includes(engine.health.status));
       if (!storage || !catalog || unhealthy.length) {
@@ -372,7 +413,7 @@
     core.publish('runtime.shutdown_started', { version: VERSION });
     state.shutdownPromise = (async () => {
       const failures = [];
-      for (const id of ['system-engine', 'admin-engine', 'history-engine', 'catalog-engine', 'search-engine', 'analytics-engine', 'security-engine', 'logging-engine', 'storage-engine']) {
+      for (const id of ['bot-engine', 'system-engine', 'admin-engine', 'history-engine', 'catalog-engine', 'search-engine', 'analytics-engine', 'security-engine', 'logging-engine', 'storage-engine']) {
         const engine = manager.getEngine(id);
         if (!engine || !['active', 'degraded', 'failed', 'initialized', 'starting', 'blocked'].includes(engine.state)) continue;
         try { await manager.stop(id); }

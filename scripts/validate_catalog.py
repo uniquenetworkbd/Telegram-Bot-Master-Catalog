@@ -71,6 +71,9 @@ require("content-security-policy" in html and "script-src 'self'" in html,
         "A restrictive Content Security Policy must be present")
 require("not a verified directory of live telegram bots" in html,
         "Catalog UI must disclose concept-only scope")
+manager_html = (ROOT / "pages" / "engine-manager.html").read_text(encoding="utf-8").casefold()
+require("content-security-policy" in manager_html and "script-src 'self'" in manager_html,
+        "Engine Manager must use a restrictive Content Security Policy")
 nav_source = (ROOT / "assets" / "js" / "global-bottom-nav.js").read_text(encoding="utf-8").casefold()
 require("tbmc-bottom-navigation" in nav_source and "tbmc-system-toggle" in nav_source and "tbmc-system-links" in nav_source,
         "Shared bottom navigation must contain a System parent and nested submenu")
@@ -122,10 +125,10 @@ class SecurityParser(HTMLParser):
             self.scripts.append(attrs.get("src", ""))
         self.inline_handlers.extend(k for k in attrs if k.lower().startswith("on"))
 p = SecurityParser(); p.feed(HTML.read_text(encoding="utf-8")); p.close()
-require(p.scripts == ["./assets/js/catalog-repository.js", "./assets/js/app-shell.js", "./assets/js/engine-core.js", "./assets/js/history-engine.js", "./assets/js/module-manager.js", "./assets/js/search-engine.js", "./assets/js/analytics-engine.js", "./assets/js/logging-engine.js", "./assets/js/security-engine.js", "./assets/js/admin-engine.js", "./assets/js/system-engine.js", "./assets/js/catalog-feature.js", "./assets/js/main-engine.js", "./assets/js/global-bottom-nav.js"],
+require(p.scripts == ["./assets/js/catalog-repository.js", "./assets/js/app-shell.js", "./assets/js/engine-core.js", "./assets/js/history-engine.js", "./assets/js/module-manager.js", "./assets/js/search-engine.js", "./assets/js/analytics-engine.js", "./assets/js/logging-engine.js", "./assets/js/security-engine.js", "./assets/js/admin-engine.js", "./assets/js/system-engine.js", "./assets/js/bot-engine.js", "./assets/js/bot-modules/catalog-query.js", "./assets/js/catalog-feature.js", "./assets/js/main-engine.js", "./assets/js/global-bottom-nav.js"],
         f"Unexpected script sources: {p.scripts}")
 require(not p.inline_handlers, f"Inline event handlers are disallowed: {p.inline_handlers}")
-for source_path in [ROOT / "assets/js/catalog-repository.js", ROOT / "assets/js/app-shell.js", ROOT / "assets/js/catalog-feature.js"]:
+for source_path in [ROOT / "assets/js/catalog-repository.js", ROOT / "assets/js/app-shell.js", ROOT / "assets/js/catalog-feature.js", ROOT / "assets/js/bot-engine.js", ROOT / "assets/js/bot-modules/catalog-query.js", ROOT / "assets/js/engine-manager-page.js", ROOT / "scripts/telegram/send-smoke-message.mjs", ROOT / "scripts/telegram/poll-updates.mjs", ROOT / "scripts/telegram/csv.mjs", ROOT / "scripts/telegram/bot-modules/catalog-query.mjs"]:
     source = source_path.read_text(encoding="utf-8")
     require(re.search(r"\beval\s*\(", source) is None, f"eval() found in {source_path}")
     require(re.search(r"\bnew\s+Function\b", source) is None, f"Function constructor found in {source_path}")

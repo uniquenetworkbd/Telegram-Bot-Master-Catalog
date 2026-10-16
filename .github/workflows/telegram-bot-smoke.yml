@@ -1,0 +1,29 @@
+name: Telegram Bot API smoke test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: telegram-bot-api-smoke
+  cancel-in-progress: false
+
+jobs:
+  send-smoke-message:
+    name: Send one fixed Telegram API diagnostic message
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate Telegram configuration and send smoke message
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ vars.TELEGRAM_CHAT_ID }}
+        run: node scripts/telegram/send-smoke-message.mjs

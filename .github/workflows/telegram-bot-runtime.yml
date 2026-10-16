@@ -1,0 +1,76 @@
+name: Telegram Bot Runtime
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: telegram-bot-runtime
+  cancel-in-progress: false
+
+jobs:
+  poll-and-reply:
+    if: ${{ vars.TELEGRAM_BOT_ENABLED == 'true' }}
+    name: Poll Telegram updates and run bot modules
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+    steps:
+      - name: Skip until bot token is configured
+        if: ${{ env.TELEGRAM_BOT_TOKEN == '' }}
+        run: echo "::notice::Configure TELEGRAM_BOT_TOKEN in repository Actions secrets to enable Telegram polling."
+
+      - name: Check out repository
+        if: ${{ env.TELEGRAM_BOT_TOKEN != '' }}
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        if: ${{ env.TELEGRAM_BOT_TOKEN != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Restore the last successful update offset
+        if: ${{ env.TELEGRAM_BOT_TOKEN != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .telegram-state
+          previous_run="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/telegram-bot-runtime.yml/runs?per_page=20" --jq ".workflow_runs[] | select(.id != $GITHUB_RUN_ID and .conclusion == \"success\") | .id" | head -n 1 || true)"
+          if [ -n "$previous_run" ]; then
+            has_offset="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$previous_run/artifacts" --jq '.artifacts[] | select(.name == "telegram-offset") | .name' | head -n 1 || true)"
+            if [ "$has_offset" = "telegram-offset" ]; then
+              gh run download "$previous_run" --name telegram-offset --dir .telegram-state --repo "$GITHUB_REPOSITORY"
+            fi
+          fi
+
+      - name: Validate Telegram worker and module contracts
+        if: ${{ env.TELEGRAM_BOT_TOKEN != '' }}
+        run: |
+          node --check scripts/telegram/poll-updates.mjs
+          node --check scripts/telegram/csv.mjs
+          node --check scripts/telegram/bot-modules/catalog-query.mjs
+          node --test tests/telegram-module-contract.mjs
+
+      - name: Poll Telegram and dispatch supported bot modules
+        if: ${{ env.TELEGRAM_BOT_TOKEN != '' }}
+        env:
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+        run: node scripts/telegram/poll-updates.mjs
+
+      - name: Persist update offset for the next scheduled run
+        if: ${{ env.TELEGRAM_BOT_TOKEN != '' && success() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: telegram-offset
+          path: .telegram-state/offset.json
+          if-no-files-found: error
+          retention-days: 90
