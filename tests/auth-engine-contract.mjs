@@ -21,6 +21,7 @@ test('OTP challenge is time-limited, attempt-limited and bound to Telegram ident
   assert.match(worker, /CHALLENGE_TTL_SECONDS\s*=\s*10\s*\*\s*60/);
   assert.match(worker, /MAX_OTP_ATTEMPTS\s*=\s*5/);
   assert.match(worker, /x-telegram-bot-api-secret-token/);
+  assert.match(worker, /request\.headers\.get\("origin"\) !== env\.ALLOWED_ORIGIN/);
   assert.match(worker, /telegram_user_id/);
   assert.match(worker, /otpHash\(env, challengeId, otp\)/);
 });
