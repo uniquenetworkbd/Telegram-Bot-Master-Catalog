@@ -382,13 +382,12 @@
     listEngines,
     refreshManager: renderManager,
     diagnosticsEnabled,
-    clearLocalActivity: () => { try { sessionStorage.removeItem(sessionEventsKey); } catch (_) {} }
+    clearLocalActivity: () => window.TBMC && window.TBMC.loggingEngine ? window.TBMC.loggingEngine.clearEvents() : (() => { try { sessionStorage.removeItem(sessionEventsKey); } catch (_) {} })()
   });
 
   document.addEventListener('DOMContentLoaded', ensureManager, { once: true });
   if (document.readyState !== 'loading') ensureManager();
   let lastRoute = currentRoute();
-  recordLocal('page_view', lastRoute);
   window.addEventListener('hashchange', () => {
     const route = currentRoute();
     if (route !== lastRoute || route === 'bot') recordLocal('page_view', route);
