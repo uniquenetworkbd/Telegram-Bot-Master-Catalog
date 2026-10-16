@@ -100,6 +100,131 @@ async function main() {
     for (const requiredEngine of ['main-engine', 'engine-registry', 'catalog-data', 'catalog-ui', 'local-activity']) {
       assert.ok(engineIds.includes(requiredEngine), 'Missing registered engine: ' + requiredEngine);
     }
+    // Preserve the current synchronous Event Bus API before refactoring it.
+    const eventContract = await page.evaluate(() => {
+      const core = window.TBMC.engineCore;
+      const name = 'test.compatibility_probe';
+      const seen = [];
+      const payload = { probe: true };
+      const offExact = core.subscribe(name, event => seen.push('exact:' + event.type));
+      const offWildcard = core.subscribe('*', event => seen.push('wildcard:' + event.type));
+      const event = core.publish(name, payload);
+      offExact();
+      offWildcard();
+
+      const failureTrace = [];
+      const offThrow = core.subscribe('test.listener_failure_probe', () => { throw new Error('listener probe'); });
+      const offAfterThrow = core.subscribe('test.listener_failure_probe', () => failureTrace.push('continued'));
+      core.publish('test.listener_failure_probe', {});
+      offThrow();
+      offAfterThrow();
+
+      let unsubscribedCalls = 0;
+      const offBeforePublish = core.subscribe('test.unsubscribe_probe', () => { unsubscribedCalls += 1; });
+      offBeforePublish();
+      core.publish('test.unsubscribe_probe', {});
+
+      let duplicateCalls = 0;
+      const duplicateCallback = () => { duplicateCalls += 1; };
+      const offDuplicateA = core.subscribe('test.duplicate_probe', duplicateCallback);
+      const offDuplicateB = core.subscribe('test.duplicate_probe', duplicateCallback);
+      offDuplicateA();
+      core.publish('test.duplicate_probe', {});
+      offDuplicateB();
+
+      let invalidCallback = '';
+      try { core.subscribe('test.invalid_callback', null); } catch (error) { invalidCallback = error.name; }
+      let duplicateEngine = '';
+      try { core.register({ id: 'main-engine', name: 'Duplicate' }); } catch (error) { duplicateEngine = error.message; }
+      let invalidEngineId = '';
+      try { core.register({ id: 'Invalid Engine ID', name: 'Invalid' }); } catch (error) { invalidEngineId = error.name; }
+      return {
+        keys: Object.keys(event).sort(),
+        type: event.type,
+        timestampValid: !Number.isNaN(Date.parse(event.at)),
+        payloadSame: event.payload === payload,
+        frozen: Object.isFrozen(event),
+        seen,
+        failureTrace,
+        unsubscribedCalls,
+        duplicateCalls,
+        invalidCallback,
+        duplicateEngine,
+        invalidEngineId
+      };
+    });
+    assert.deepEqual(eventContract.keys, ['at', 'payload', 'type']);
+    assert.equal(eventContract.type, 'test.compatibility_probe');
+    assert.equal(eventContract.timestampValid, true);
+    assert.equal(eventContract.payloadSame, true);
+    assert.equal(eventContract.frozen, true);
+    assert.deepEqual(eventContract.seen, ['exact:test.compatibility_probe', 'wildcard:test.compatibility_probe']);
+    assert.deepEqual(eventContract.failureTrace, ['continued'], 'One subscriber error must not stop later subscribers');
+    assert.equal(eventContract.unsubscribedCalls, 0, 'Unsubscribed callbacks must not receive later events');
+    assert.equal(eventContract.duplicateCalls, 1, 'One unsubscribe removes only one duplicate subscription');
+    assert.equal(eventContract.invalidCallback, 'TypeError');
+    assert.match(eventContract.duplicateEngine, /Duplicate engine id/);
+    assert.equal(eventContract.invalidEngineId, 'TypeError');
+
+    const schemaContract = await page.evaluate(() => {
+      const core = window.TBMC.engineCore;
+      const metadata = core.registerEventSchema('test.schema-probe', {
+        version: 1,
+        publisher: 'browser-smoke',
+        privacy: 'internal',
+        consumers: ['test-runner', 'test-runner'],
+        validate: payload => Boolean(payload && payload.ok === true)
+      });
+      const metadataBeforeMutation = {
+        ...metadata,
+        consumers: [...metadata.consumers]
+      };
+      metadata.consumers.push('mutated-public-snapshot');
+      const safeSnapshot = core.getEventSchema('test.schema-probe');
+      const valid = core.validateEvent('test.schema-probe', { ok: true });
+      const invalid = core.validateEvent('test.schema-probe', { ok: false });
+      const unknown = core.validateEvent('test.unknown-schema', { ok: false });
+      let invalidPublish = '';
+      let delivered = 0;
+      const off = core.subscribe('test.schema-probe', () => { delivered += 1; });
+      try { core.publish('test.schema-probe', { ok: false }); } catch (error) { invalidPublish = error.name; }
+      const event = core.publish('test.schema-probe', { ok: true });
+      off();
+      let duplicateSchema = '';
+      try {
+        core.registerEventSchema('test.schema-probe', {
+          version: 1, publisher: 'browser-smoke', privacy: 'internal', consumers: [], validate: () => true
+        });
+      } catch (error) { duplicateSchema = error.message; }
+      return {
+        metadata: metadataBeforeMutation,
+        valid,
+        invalid,
+        unknown,
+        invalidPublish,
+        delivered,
+        eventKeys: Object.keys(event).sort(),
+        publicMetadataHasValidator: Object.prototype.hasOwnProperty.call(safeSnapshot, 'validate'),
+        publicSnapshotIsolated: !safeSnapshot.consumers.includes('mutated-public-snapshot'),
+        listed: core.listEventSchemas().some(schema => schema.type === 'test.schema-probe'),
+        duplicateSchema
+      };
+    });
+    assert.deepEqual(schemaContract.metadata, {
+      type: 'test.schema-probe', version: 1, publisher: 'browser-smoke',
+      privacy: 'internal', consumers: ['test-runner']
+    });
+    assert.equal(schemaContract.valid.valid, true);
+    assert.equal(schemaContract.invalid.valid, false);
+    assert.deepEqual(schemaContract.invalid.errors, ['INVALID_PAYLOAD']);
+    assert.equal(schemaContract.unknown.schemaRegistered, false, 'Unregistered legacy event types remain compatible');
+    assert.equal(schemaContract.invalidPublish, 'TypeError');
+    assert.equal(schemaContract.delivered, 1, 'Invalid schema payload must not be delivered');
+    assert.deepEqual(schemaContract.eventKeys, ['at', 'payload', 'type'], 'Schema metadata must not change the legacy event envelope');
+    assert.equal(schemaContract.publicMetadataHasValidator, false, 'Public schema snapshots must not expose validator callbacks');
+    assert.equal(schemaContract.publicSnapshotIsolated, true, 'Public metadata mutation must not affect internal schema state');
+    assert.equal(schemaContract.listed, true);
+    assert.match(schemaContract.duplicateSchema, /Duplicate event schema/);
     assert.match(await page.locator('#page-profile').innerText(), /Admin authentication is not implemented/i);
     assert.doesNotMatch(await page.locator('body').innerText(), /Data unavailable/i, 'Healthy system must not report unavailable data');
     const configPage = await browser.newPage({ viewport: { width: 390, height: 844 } });

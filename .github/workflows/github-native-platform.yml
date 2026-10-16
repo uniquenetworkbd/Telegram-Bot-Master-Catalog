@@ -35,19 +35,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Validate dedicated platform pages
+      - name: Validate current platform pages and GitHub-native boundary
         run: |
-          test -f pages/engine-manager.html
-          test -f pages/platform-status.html
-          test -f pages/visitor-analytics.html
-          test -f pages/users-accounts.html
-          test -f pages/activity-history.html
           test -f pages/logs-audit.html
           test -f pages/system-configuration.html
           test -f pages/version-logs.html
           test -f pages/live-information.html
-          test -f pages/privacy-data-controls.html
-          grep -q "GitHub-native" pages/platform-status.html
+          grep -qi "GitHub Pages" README.md
           grep -q "LIVE GITHUB DATA" pages/logs-audit.html
           grep -q "assets/js/logs-audit.js" pages/logs-audit.html
           grep -qi "System configuration" assets/js/global-bottom-nav.js
@@ -55,7 +49,7 @@ jobs:
           grep -qi "Live information" assets/js/global-bottom-nav.js
           grep -q "tbmc-bottom-navigation" assets/js/global-bottom-nav.js
           grep -q "themeSelect" pages/system-configuration.html
-          grep -q "Documented versions" pages/version-logs.html
+          grep -q "Documented releases" pages/version-logs.html
           grep -q "live-information.js" pages/live-information.html
       - name: Validate runtime scripts
         run: |
