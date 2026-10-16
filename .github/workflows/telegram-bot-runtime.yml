@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   poll-and-reply:
+    if: ${{ vars.TELEGRAM_BOT_ENABLED == 'true' }}
     name: Poll Telegram updates and run bot modules
     runs-on: ubuntu-latest
     timeout-minutes: 4
