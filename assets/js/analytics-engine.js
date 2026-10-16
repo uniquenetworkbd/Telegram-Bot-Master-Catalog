@@ -5,8 +5,7 @@
   if (!repository) throw new Error('Analytics Engine requires the Storage API');
 
   function isHighAutomation(value) {
-    const normalized = String(value || '').trim().toLowerCase();
-    return normalized === 'high' || normalized === 'উচ্চ';
+    return /উচ্চ|high/i.test(String(value || ''));
   }
 
   function summarize(records) {
