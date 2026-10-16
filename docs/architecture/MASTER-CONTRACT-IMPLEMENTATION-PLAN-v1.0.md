@@ -511,13 +511,18 @@ The migration is complete only when all conditions are evidenced:
 ## 15. Current execution checklist
 
 - [x] Existing Engine Contract Specification reviewed as an input.
-- [x] Existing Module Manager Contract Specification reviewed as an input.
+- [x] Existing Module Manager Contract Specification reviewed as an input; its standalone PR #18 is closed as superseded by this master plan.
 - [x] Current Event Bus public behavior inspected in `assets/js/engine-core.js`.
 - [x] Catalog repository and Catalog UI entry points inspected.
-- [ ] Current main commit and workflow/test baseline recorded for this implementation run.
+- [x] Baseline main commit recorded: `c3dcc4591ca9afcc1da83690a06584d81b03d32b`.
 - [ ] Repository-wide call-site inventory completed.
-- [ ] Event Bus compatibility tests added and passing.
-- [ ] First bounded implementation change completed.
-- [ ] Full regression and live deployment verified.
+- [x] Event Bus compatibility and schema-validation tests added and passing on PR head `f88aedd2a1678cfff4dd3b6c0bf0a6ed7eb8052f`.
+- [x] First bounded implementation change completed: backward-compatible Event Schema Registry in `assets/js/engine-core.js`.
+- [x] Catalog data/static validation passed in workflow run [38851503758](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38851503758).
+- [x] Browser regression passed in the same run: Chromium, Firefox and WebKit; 1,000 records / 100 categories; search/filter/details/history/pagination/export/theme/System/XSS checks; mobile 390px and desktop 1440px; zero uncaught page errors and local HTTP errors.
+- [x] Platform audit passed in workflow run [38851503827](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38851503827) after correcting stale checks for absent, unapproved pages.
+- [ ] Full regression and live GitHub Pages deployment verified after merge.
 
-**Next action:** complete the baseline and call-site search, then begin Phase 1 with tests for current Event Bus behavior. No additional contract/architecture documents are to be created; update this master plan only when a decision genuinely changes.
+**Current state:** the source, tests, workflow correction and master plan are in PR #19. CI passed on the current code/test commit; live deployment is not yet claimed because the PR has not been merged and the live URL has not been verified.
+
+**Next action:** finish the repository-wide call-site inventory, then implement Module Manager dependency/lifecycle behavior in a separate bounded code change. No additional contract/architecture documents are to be created; update this master plan only when a decision genuinely changes.
