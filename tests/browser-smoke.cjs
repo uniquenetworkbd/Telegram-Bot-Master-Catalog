@@ -360,6 +360,18 @@ async function main() {
         historyHealth: manager.getEngine('history-engine')?.health.status,
         analyticsState: manager.getEngine('analytics-engine')?.state,
         analyticsHealth: manager.getEngine('analytics-engine')?.health.status,
+        loggingState: manager.getEngine('logging-engine')?.state,
+        loggingHealth: manager.getEngine('logging-engine')?.health.status,
+        securityState: manager.getEngine('security-engine')?.state,
+        securityHealth: manager.getEngine('security-engine')?.health.status,
+        adminState: manager.getEngine('admin-engine')?.state,
+        adminHealth: manager.getEngine('admin-engine')?.health.status,
+        systemState: manager.getEngine('system-engine')?.state,
+        systemHealth: manager.getEngine('system-engine')?.health.status,
+        loggingStatus: window.TBMC.loggingEngine.getStatus(),
+        securityReport: window.TBMC.securityEngine.inspectDocument(),
+        adminCapabilities: window.TBMC.adminEngine.getCapabilities(),
+        systemSnapshot: window.TBMC.systemEngine.snapshot(),
         loadPromiseCached: datasetA === datasetB,
         runtimeReadySchema: window.TBMC.engineCore.getEventSchema('runtime.ready') !== null,
         catalogLoadedSchema: window.TBMC.engineCore.getEventSchema('catalog.loaded') !== null,
@@ -381,10 +393,26 @@ async function main() {
     assert.equal(mainEngineContract.historyHealth, 'healthy');
     assert.equal(mainEngineContract.analyticsState, 'active');
     assert.equal(mainEngineContract.analyticsHealth, 'healthy');
+    assert.equal(mainEngineContract.loggingState, 'active');
+    assert.equal(mainEngineContract.loggingHealth, 'healthy');
+    assert.equal(mainEngineContract.securityState, 'active');
+    assert.equal(mainEngineContract.securityHealth, 'healthy');
+    assert.equal(mainEngineContract.adminState, 'active');
+    assert.equal(mainEngineContract.adminHealth, 'healthy');
+    assert.equal(mainEngineContract.systemState, 'active');
+    assert.equal(mainEngineContract.systemHealth, 'healthy');
+    assert.equal(mainEngineContract.loggingStatus.listening, true);
+    assert.ok(mainEngineContract.loggingStatus.entryCount > 0);
+    assert.equal(mainEngineContract.securityReport.passed, true);
+    assert.deepEqual(mainEngineContract.securityReport.findings, []);
+    assert.equal(mainEngineContract.adminCapabilities.authenticationConfigured, false);
+    assert.equal(mainEngineContract.adminCapabilities.serverAuthorizationEnforced, false);
+    assert.equal(mainEngineContract.systemSnapshot.runtimeState, 'ready');
+    assert.equal(mainEngineContract.systemSnapshot.engineCount, 9);
     assert.equal(mainEngineContract.loadPromiseCached, true, 'Storage and Catalog must share the validated dataset load');
     assert.equal(mainEngineContract.runtimeReadySchema, true);
     assert.equal(mainEngineContract.catalogLoadedSchema, true);
-    assert.equal(mainEngineContract.engineCount, 5);
+    assert.equal(mainEngineContract.engineCount, 9);
 
     const moduleManagerContract = await page.evaluate(async () => {
       const manager = window.TBMC.moduleManager;
