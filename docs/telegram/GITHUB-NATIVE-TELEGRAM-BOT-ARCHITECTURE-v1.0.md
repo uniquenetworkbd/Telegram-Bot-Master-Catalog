@@ -10,6 +10,7 @@
 - The browser Bot Engine is a module registry/contract layer, not a secure place for bot credentials.
 - `catalog-query` defines `/start`, `/help`, and `/search <keyword>` behavior against the canonical concept catalog through injected services.
 - The manual GitHub Actions workflow can send one fixed diagnostic message through Telegram's official `sendMessage` method.
+- A scheduled GitHub Actions poller runs every five minutes when `TELEGRAM_BOT_TOKEN` is configured. It calls `getUpdates`, dispatches `/start`, `/help`, and `/search`, replies through `sendMessage`, and saves only the update offset as a GitHub Actions artifact.
 - No Telegram token, chat ID, user message, or private configuration belongs in source code, CSV, HTML, browser storage, or logs.
 
 ## Required GitHub configuration
@@ -25,6 +26,14 @@ Do not paste the token into issues, pull requests, chat messages, workflow input
 ## Bot module contract
 
 A module has a stable ID, SemVer version, description, command list, capabilities, and a handler. The handler receives a Telegram update and explicitly injected services, then returns a Telegram `sendMessage` payload or `null`. It does not call Telegram directly and never receives the bot token.
+
+## Polling runtime behavior
+
+- The scheduled workflow is a best-effort, five-minute poller, not a real-time webhook. GitHub may delay scheduled runs; it is not a service-level guarantee.
+- The first run without a saved offset advances past already-pending updates to avoid unexpectedly replying to old messages. Subsequent runs process new updates.
+- Offset state is kept in a GitHub Actions artifact; this is not a transactional database. A failed run can cause a duplicate reply on a retry, so processing is at-least-once rather than exactly-once.
+- The bot accepts public catalog search commands from chats that can reach it. It does not store raw message content or chat history. Do not add private or sensitive user workflows without a separate privacy/security review.
+- The poller requires that the bot use long-polling rather than a configured webhook, and only one poller should use the token.
 
 ## What is and is not implemented
 
