@@ -41,19 +41,20 @@ async function main() {
     const widths = await page.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
     assert.ok(widths.doc <= widths.inner + 4 && widths.body <= widths.inner + 4, `Mobile overflow: ${JSON.stringify(widths)}`);
     assert.equal(await page.locator('#page-system').count(), 0, 'System must be a navigation group, not a separate hub page');
-    assert.equal(await page.locator('#systemMenuToggle').count(), 1, 'Primary navigation is missing the System parent item');
-    assert.equal(await page.locator('#systemSubmenu a').count(), 4, 'System submenu must be nested directly under System in the primary navigation');
-    assert.deepEqual(await page.locator('#systemSubmenu a').evaluateAll(links => links.map(link => link.getAttribute('href'))), ['./pages/system-configuration.html', './pages/logs-audit.html', './pages/version-logs.html', './pages/live-information.html']);
-    assert.match((await page.locator('#systemSubmenu').innerText()).replace(/[⚙≋◷◉]/g, ''), /System configuration[\s\S]*Logs & Audit[\s\S]*Version Logs[\s\S]*Live information/);
+    assert.equal(await page.locator('#tbmcUnifiedNavigation').count(), 1, 'Shared bottom navigation module must load');
+    await page.locator('.tbmc-bottom-toggle').click();
+    assert.equal(await page.locator('#tbmcBottomPanel').isVisible(), true, 'Main navigation panel must open');
+    assert.equal(await page.locator('#tbmcSystemLinks a').count(), 4, 'System submenu must expose four links');
+    assert.deepEqual(await page.locator('#tbmcSystemLinks a').evaluateAll(links => links.map(link => link.getAttribute('href'))), ['./pages/system-configuration.html', './pages/logs-audit.html', './pages/version-logs.html', './pages/live-information.html']);
+    assert.match((await page.locator('#tbmcSystemLinks').innerText()).replace(/[⚙≋◷◉]/g, ''), /System configuration[\\s\\S]*Logs & Audit[\\s\\S]*Version Logs[\\s\\S]*Live information/);
+    await page.locator('.tbmc-system-toggle').click();
+    assert.equal(await page.locator('#tbmcSystemLinks').isVisible(), false, 'System submenu should collapse');
+    await page.locator('.tbmc-system-toggle').click();
+    assert.equal(await page.locator('#tbmcSystemLinks').isVisible(), true, 'System submenu should expand');
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.locator('#systemMenuToggle').click();
-    assert.equal(await page.locator('#systemMenuToggle').getAttribute('aria-expanded'), 'false');
-    assert.equal(await page.locator('#systemSubmenu').isVisible(), false);
-    await page.locator('#systemMenuToggle').click();
-    assert.equal(await page.locator('#systemSubmenu').isVisible(), true);
+    assert.equal(await page.locator('#tbmcUnifiedNavigation').count(), 1, 'Shared navigation must persist at desktop width');
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.locator('#moreNavBtn').click();
-    assert.equal(await page.locator('#moreMenu .mobile-system-group a').count(), 4, 'Mobile More menu must expose the same four System submenu links');
+    assert.equal(await page.locator('#tbmcUnifiedNavigation').count(), 1, 'Shared navigation must persist at mobile width');
     for (const [path, heading] of [
       ['pages/system-configuration.html', 'System configuration'],
       ['pages/version-logs.html', 'Version Logs'],
@@ -66,7 +67,9 @@ async function main() {
       });
       await modulePage.goto(new URL(path, BASE).href, { waitUntil: 'networkidle', timeout: 30000 });
       assert.match(await modulePage.locator('h1').textContent(), new RegExp(heading, 'i'));
-      assert.ok(await modulePage.locator('.system-subnav a').count() === 4, path + ': system submenu links missing');
+      assert.equal(await modulePage.locator('#tbmcUnifiedNavigation').count(), 1, path + ': shared navigation missing');
+      await modulePage.locator('.tbmc-bottom-toggle').click();
+      assert.equal(await modulePage.locator('#tbmcSystemLinks a').count(), 4, path + ': System submenu links missing');
       const moduleWidths = await modulePage.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
       assert.ok(moduleWidths.doc <= moduleWidths.inner + 4 && moduleWidths.body <= moduleWidths.inner + 4, path + ': mobile overflow ' + JSON.stringify(moduleWidths));
       if (path.includes('system-configuration')) {
@@ -75,8 +78,12 @@ async function main() {
         assert.equal(await modulePage.locator('html').getAttribute('data-theme'), 'dark');
         await modulePage.locator('#resetSettings').click();
       } else if (path.includes('version-logs')) {
-        await modulePage.waitForFunction(() => Number(document.querySelector('#versionCount')?.textContent) > 0, null, { timeout: 20000 });
-        assert.ok(await modulePage.locator('.version-card').count() > 0, 'Version history cards were not rendered');
+        assert.equal(await modulePage.locator('#releaseCount').textContent(), '2', 'Release count must match the numbered ledger');
+        assert.equal(await modulePage.locator('#releaseLatest').textContent(), 'v1.0.1', 'Latest version must match the newest release');
+        assert.equal(await modulePage.locator('.release-card').count(), 2, 'Only documented release records should be shown');
+        assert.match(await modulePage.locator('#releaseList').innerText(), /#001 · v1\\.0\\.0[\\s\\S]*#002 · v1\\.0\\.1/);
+        await modulePage.locator('.release-card').first().locator('summary').click();
+        assert.equal(await modulePage.locator('.release-card').first().evaluate(el => el.open), true, 'Release cards must expand');
       } else {
         await modulePage.waitForFunction(() => document.querySelector('#sessionDuration')?.textContent !== '0s' && document.querySelector('#repoStatus')?.textContent !== 'Checking', null, { timeout: 20000 });
         assert.notEqual(await modulePage.locator('#runtimeStatus').textContent(), '');
