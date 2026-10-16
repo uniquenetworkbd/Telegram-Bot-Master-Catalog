@@ -13,4 +13,4 @@
 </main>
 <script src="../assets/js/engine-core.js"></script><script>
 addEventListener('DOMContentLoaded',()=>{const box=document.getElementById('engines');const render=()=>{const api=window.TBMC&&window.TBMC.engineCore;if(!api){box.innerHTML='<div class="card"><strong>Runtime unavailable</strong></div>';return}box.innerHTML='<div class="grid split">'+api.listEngines().map(e=>'<div class="card engine"><div class="runtime-headline"><div><strong>'+esc(e.name)+'</strong><p>'+esc(e.id)+' · v'+esc(e.version)+'</p></div><span class="tag '+(e.health.status==='healthy'?'green':'amber')+'">'+esc(e.health.status)+'</span></div><p>'+esc(e.description)+'</p><div class="sub">Dependencies: '+esc(e.dependencies.join(', ')||'None')+'</div><div class="sub">Capabilities: '+esc(e.capabilities.join(' · ')||'—')+'</div></div>').join('')+'</div>'};render();window.TBMC.engineCore.subscribe('engine.registered',render)});function esc(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-</script></body></html>
+</script><script src="../assets/js/global-bottom-nav.js"></script></body></html>
