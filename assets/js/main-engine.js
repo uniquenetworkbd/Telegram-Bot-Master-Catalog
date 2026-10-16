@@ -272,9 +272,11 @@
         start: async () => {},
         healthCheck: async () => {
           const capabilities = window.TBMC.adminEngine.getCapabilities();
-          return capabilities.profilePageAvailable && capabilities.authenticationConfigured === false
-            ? { status: 'healthy', detail: 'Static profile is available; authenticated administration is explicitly not configured' }
-            : { status: 'unhealthy', detail: 'Admin profile capability state is inconsistent' };
+          return capabilities.mode === 'static-project-profile' &&
+            capabilities.authenticationConfigured === false &&
+            capabilities.serverAuthorizationEnforced === false
+            ? { status: 'healthy', detail: 'Static-project capability contract is consistent; authenticated administration is explicitly not configured' }
+            : { status: 'unhealthy', detail: 'Admin capability boundary is inconsistent' };
         },
         stop: async () => {},
         destroy: async () => {}
