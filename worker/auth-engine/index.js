@@ -284,6 +284,11 @@ export default {
         }
         return await telegramWebhook(request, env);
       }
+      // Enforce exact-origin checks on browser POSTs to prevent cross-site session/logout requests.
+      if (url.pathname.startsWith("/api/auth/") && request.method === "POST" &&
+          (!env.ALLOWED_ORIGIN || request.headers.get("origin") !== env.ALLOWED_ORIGIN)) {
+        return json({ error: "ORIGIN_NOT_ALLOWED" }, 403);
+      }
       let response;
       if (url.pathname === "/api/auth/health" && request.method === "GET") response = await health(env);
       else if (url.pathname.startsWith("/api/auth/") &&
