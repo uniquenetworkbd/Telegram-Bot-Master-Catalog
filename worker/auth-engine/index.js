@@ -113,7 +113,7 @@ async function startChallenge(request, env) {
   const timestamp = now();
   // Reduce automated challenge flooding per username; old challenges are not reusable.
   const recent = await env.DB.prepare(
-    "SELECT COUNT(*) AS count FROM auth_challenges WHERE telegram_username=? AND created_at>? AND status IN ('pending','otp_sent')"
+    "SELECT COUNT(*) AS count FROM auth_challenges WHERE telegram_username=? AND created_at>?"
   ).bind(username, timestamp - 15 * 60).first();
   if (Number(recent?.count || 0) >= 3) return json({ error: "TOO_MANY_REQUESTS", message: "Wait a few minutes before trying again." }, 429);
 
@@ -262,9 +262,17 @@ export default {
     const cors = corsHeaders(request, env);
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     try {
-      if (url.pathname === "/api/telegram/webhook" && request.method === "POST") return await telegramWebhook(request, env);
+      if (url.pathname === "/api/telegram/webhook" && request.method === "POST") {
+        if (!env.DB || !env.TELEGRAM_OTP_BOT_TOKEN || !env.TELEGRAM_WEBHOOK_SECRET || !env.OTP_PEPPER) {
+          return json({ error: "AUTH_SERVICE_NOT_CONFIGURED" }, 503);
+        }
+        return await telegramWebhook(request, env);
+      }
       let response;
-      if (url.pathname === "/api/auth/start" && request.method === "POST") response = await startChallenge(request, env);
+      if (url.pathname.startsWith("/api/auth/") &&
+          (!env.DB || !env.TELEGRAM_OTP_BOT_TOKEN || !env.TELEGRAM_OTP_BOT_USERNAME || !env.TELEGRAM_WEBHOOK_SECRET || !env.OTP_PEPPER)) {
+        response = json({ error: "AUTH_SERVICE_NOT_CONFIGURED", message: "The secure authentication service is not fully configured." }, 503);
+      } else if (url.pathname === "/api/auth/start" && request.method === "POST") response = await startChallenge(request, env);
       else if (url.pathname === "/api/auth/verify" && request.method === "POST") response = await verifyOtp(request, env);
       else if (url.pathname === "/api/auth/me" && request.method === "GET") response = await me(request, env);
       else if (url.pathname === "/api/auth/logout" && request.method === "POST") response = await logout(request, env);
