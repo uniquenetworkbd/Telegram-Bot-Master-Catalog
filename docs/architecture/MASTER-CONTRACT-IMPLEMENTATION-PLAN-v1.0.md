@@ -535,7 +535,7 @@ The migration is complete only when all conditions are evidenced:
 - [x] Event Bus compatibility and schema-validation tests passed on PR #19 before merge.
 - [x] First bounded implementation change completed: backward-compatible Event Schema Registry in `assets/js/engine-core.js`.
 - [x] Module Manager implementation started in branch `module-manager-lifecycle-v1`: new `assets/js/module-manager.js`, runtime script integration, combined System registry snapshots, and lifecycle/dependency browser tests.
-- [ ] Module Manager browser regression and CI passed on the current branch.
+- [x] Module Manager static/data checks and browser regression passed on code/test commit `ac38067666f2d3f0656207ac5ad76ffc8a0288ac`: Catalog validation run [38852328985](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38852328985), platform audit run [38852328926](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38852328926).
 - [x] Catalog data/static validation passed in workflow run [38851503758](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38851503758).
 - [x] Browser regression passed in the same run: Chromium, Firefox and WebKit; 1,000 records / 100 categories; search/filter/details/history/pagination/export/theme/System/XSS checks; mobile 390px and desktop 1440px; zero uncaught page errors and local HTTP errors.
 - [x] Platform audit passed in workflow run [38851503827](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38851503827) after correcting stale checks for absent, unapproved pages.
@@ -543,4 +543,4 @@ The migration is complete only when all conditions are evidenced:
 
 **Current state:** the source, tests, workflow correction and master plan are in PR #19. CI passed on the current code/test commit; live deployment is not yet claimed because the PR has not been merged and the live URL has not been verified.
 
-**Next action:** finish the repository-wide call-site inventory, then implement Module Manager dependency/lifecycle behavior in a separate bounded code change. No additional contract/architecture documents are to be created; update this master plan only when a decision genuinely changes.
+**Next action:** complete the remaining tracked-file inventory before extracting Catalog/Storage/Search behavior; then migrate one Engine at a time with tests in the same change. Module Manager implementation is in PR #20; verify its final head checks, merge it, and verify the main branch/live deployment separately. No additional contract/architecture documents are to be created; update this master plan only when a decision genuinely changes.
