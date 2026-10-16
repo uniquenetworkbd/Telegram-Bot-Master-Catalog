@@ -125,7 +125,7 @@ async function main() {
         if (r.url().startsWith(new URL(BASE).origin) && r.status() >= 400) badResponses.push(`${r.status()} ${r.url()}`);
       });
       await modulePage.goto(new URL(path, BASE).href, { waitUntil: 'networkidle', timeout: 30000 });
-      assert.match(await modulePage.locator('h1').textContent(), new RegExp(heading.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\    assert.deepEqual(pageErrors, [], 'Live pages have uncaught JavaScript errors');'), 'i'));
+      assert.equal((await modulePage.locator('h1').innerText()).trim(), heading, path + ': wrong heading');
       assert.equal(await modulePage.locator('#tbmcUnifiedNavigation').count(), 1, path + ': shared bottom navigation missing');
       const viewport = await modulePage.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
       assert.ok(viewport.doc <= viewport.inner + 4 && viewport.body <= viewport.inner + 4, path + ': mobile overflow ' + JSON.stringify(viewport));
