@@ -40,6 +40,16 @@
   const panel = root.querySelector('.tbmc-bottom-panel');
   const systemToggle = root.querySelector('.tbmc-system-toggle');
   const systemLinks = root.querySelector('.tbmc-system-links');
+  const syncActiveRoute = () => {
+    const hash = (location.hash || '#home').replace(/^#/, '');
+    root.querySelectorAll('a[data-route]').forEach(link => {
+      const active = link.dataset.route === hash || (hash.startsWith('bot/') && link.dataset.route === 'bot');
+      if (active) link.setAttribute('aria-current','page');
+      else link.removeAttribute('aria-current');
+    });
+  };
+  window.addEventListener('hashchange', syncActiveRoute);
+  syncActiveRoute();
   const close = () => { panel.hidden = true; toggle.setAttribute('aria-expanded','false'); };
   toggle.addEventListener('click', () => {
     const open = toggle.getAttribute('aria-expanded') !== 'true';
