@@ -178,28 +178,22 @@ For the first implementation pass, keep these APIs and semantics:
 
 ### 6.2 Event envelope and payload
 
-Current envelope:
+The canonical envelope remains:
 ```js
 { type: "catalog.loaded", at: "ISO timestamp", payload: {} }
 ```
 
-Target additive metadata may be introduced only with compatibility tests:
-```js
-{
-  type: "catalog.loaded",
-  at: "ISO timestamp",
-  payload: {},
-  meta: {
-    version: 1,
-    eventId: "runtime-generated-id",
-    publisher: "storage",
-    correlationId: null,
-    privacy: "internal"
-  }
-}
-```
+The v1 schema registry is deliberately stored out-of-band. It does not add fields to emitted events, so the legacy `{ type, at, payload }` shape remains unchanged.
 
-Do not rename `type` to `name`, `at` to `timestamp`, or change existing payload semantics until every subscriber and test is migrated. The outer event object may be frozen; decide and test payload immutability separately. Prefer defensive copies or schema-normalized payloads where feasible, but never silently change object identity if a consumer relies on it.
+Implemented additive API:
+- `registerEventSchema(type, definition)` — registers one in-memory schema for a new or explicitly opted-in event type.
+- `validateEvent(type, payload)` — returns `{ valid, schemaRegistered, version?, errors }`; unknown schema types return `valid: true` and `schemaRegistered: false` to preserve legacy event types.
+- `getEventSchema(type)` and `listEventSchemas()` — return safe metadata snapshots and never expose validator callbacks.
+- Schema definition requires a positive integer `version`, non-empty `publisher`, `privacy` in `public | internal | usage | security | configuration`, a `consumers` array, and a `validate(payload)` function that returns a boolean.
+
+For a registered schema, `publish(type,payload)` validates before dispatch. A false, non-boolean, or throwing validator rejects the event with a `TypeError` and no subscriber is called. Unregistered types keep their current behavior. Duplicate schema registration is rejected; schema definitions are immutable for the runtime lifetime. Public schema metadata is copied and omits the validator function.
+
+Do not rename `type` to `name`, `at` to `timestamp`, or change existing payload semantics. The outer event object remains frozen; payload identity is preserved for backward compatibility. Payload deep-freezing is not part of this implementation.
 
 ### 6.3 Event naming and schema rules
 
@@ -381,15 +375,18 @@ Add tests around current behavior before altering it:
 - Legacy definition adapter preserves old public behavior.
 
 ### Event Contract tests
-- All 15 baseline behaviors in Section 9.
-- Payload schema validation and version compatibility.
-- Event publisher and allowed consumer declarations.
+- All baseline behaviors in Section 9.
+- Registered schema accepts valid payloads and rejects invalid payloads before dispatch.
+- Unknown schemas preserve legacy behavior.
+- Schema version, publisher, privacy class and consumer declarations are validated.
+- Public schema snapshots omit validator callbacks and cannot mutate the internal schema registry.
+- Duplicate schema registration is rejected.
 - Exact/wildcard order and synchronous delivery remain unchanged.
 - Subscriber cleanup during stop/destroy.
 - One subscriber failure does not block the next.
 - Logging/Event Bus failure cannot recursively publish indefinitely.
 - Sensitive data is not persisted or emitted to analytics.
-- Compatibility adapter does not break `{ type, at, payload }`.
+- Schema metadata does not alter `{ type, at, payload }`.
 
 ### End-to-end acceptance
 - Every existing user-visible feature remains available and behaves as before unless a documented defect is being corrected.
