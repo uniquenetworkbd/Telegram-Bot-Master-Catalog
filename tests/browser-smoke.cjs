@@ -119,7 +119,7 @@ async function main() {
       assert.equal(await modulePage.locator('#tbmcUnifiedNavigation').count(), 1, 'Standalone pages must load the shared bottom navigation');
       await modulePage.locator('.tbmc-bottom-toggle').click();
       assert.equal(await modulePage.locator('#tbmcSystemLinks a').count(), 4, 'Shared System submenu must be available on standalone pages');
-      if (path.includes('version-logs')) assert.match(await modulePage.locator('body').innerText(), /BASELINE SNAPSHOT[\s\S]*System & Theme/i);
+      if (path.includes('version-logs')) assert.match(await modulePage.locator('body').innerText(), /Documented versions[\s\S]*Latest version[\s\S]*v8\.2\.4/i);
       if (path.includes('live-information')) assert.match(await modulePage.locator('body').innerText(), /Global visitor count[\s\S]*Unavailable/i);
       await modulePage.close();
     }
