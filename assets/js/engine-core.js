@@ -212,19 +212,13 @@
     const toggle = document.getElementById('tbmc-diagnostics-toggle');
     toggle.checked = diagnosticsEnabled();
     toggle.addEventListener('change', () => {
-      safeWrite(localStorage, consentKey, String(toggle.checked));
-      if (!toggle.checked) {
-        try { sessionStorage.removeItem(sessionEventsKey); } catch (_) {}
-      } else {
-        recordLocal('page_view', currentRoute());
-      }
-      publish('diagnostics.preference_changed', { enabled: toggle.checked });
+      if (window.TBMC && window.TBMC.loggingEngine) window.TBMC.loggingEngine.setEnabled(toggle.checked);
       renderManager();
     });
     document.getElementById('tbmc-clear-activity').addEventListener('click', () => {
-      try { sessionStorage.removeItem(sessionEventsKey); } catch (_) {}
+      if (window.TBMC && window.TBMC.loggingEngine) window.TBMC.loggingEngine.clearEvents();
+      else { try { sessionStorage.removeItem(sessionEventsKey); } catch (_) {} }
       renderManager();
-      publish('activity.cleared');
     });
     renderManager();
   }
