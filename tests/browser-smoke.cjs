@@ -82,7 +82,8 @@ async function main() {
     assert.equal(await page.locator('#page-system').count(), 0, 'System must be a navigation group, not a separate hub page');
     await page.setViewportSize({ width: 1280, height: 900 });
     assert.equal(await page.locator('#systemMenuToggle').count(), 1, 'System parent must live in primary navigation');
-    assert.deepEqual(await page.locator('#systemSubmenu a').allTextContents(), ['System configuration', 'Logs & Audit', 'Version Logs', 'Live information']);
+    assert.deepEqual(await page.locator('#systemSubmenu a').evaluateAll(links => links.map(link => link.getAttribute('href'))), ['./pages/system-configuration.html', './pages/logs-audit.html', './pages/version-logs.html', './pages/live-information.html']);
+    assert.match((await page.locator('#systemSubmenu').innerText()).replace(/[⚙≋◷◉]/g, ''), /System configuration[\s\S]*Logs & Audit[\s\S]*Version Logs[\s\S]*Live information/);
     await page.locator('#systemMenuToggle').click();
     assert.equal(await page.locator('#systemSubmenu').isVisible(), false, 'System submenu should collapse');
     await page.locator('#systemMenuToggle').click();
