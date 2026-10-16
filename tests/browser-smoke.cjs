@@ -95,9 +95,22 @@ async function main() {
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(await page.locator('#tbmcUnifiedNavigation').count(), 1, 'Same navigation module must remain available on mobile');
     assert.equal(await page.locator('.sidebar, .bottom-nav, #moreMenu').count(), 0, 'Legacy duplicate navigation must be removed');
+    // Authentication pages must render safely while the backend is intentionally unconfigured.
+    for (const route of ['login.html', 'register.html', 'logout.html']) {
+      const authPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      const authErrors = [];
+      authPage.on('pageerror', error => authErrors.push(error.message));
+      await authPage.goto(BASE + '/' + route, { waitUntil: 'networkidle' });
+      assert.equal(await authPage.locator('[data-auth-status]').isVisible(), true, route + ' should disclose the backend configuration state');
+      assert.match(await authPage.locator('[data-auth-status]').innerText(), /backend not configured/i, route + ' must not claim OTP is live without an API');
+      assert.ok(await authPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), route + ' must not overflow horizontally on mobile');
+      assert.deepEqual(authErrors, [], route + ' should have no uncaught JavaScript errors');
+      await authPage.close();
+    }
+
     assert.ok(await page.evaluate(() => Boolean(window.TBMC && window.TBMC.engineCore)), 'Main Engine runtime should be exposed');
     const engineIds = await page.evaluate(() => window.TBMC.engineCore.listEngines().map(engine => engine.id));
-    for (const requiredEngine of ['main-engine', 'engine-registry', 'catalog-data', 'catalog-ui', 'local-activity']) {
+    for (const requiredEngine of ['main-engine', 'engine-registry', 'catalog-data', 'catalog-ui', 'local-activity', 'auth-otp-engine']) {
       assert.ok(engineIds.includes(requiredEngine), 'Missing registered engine: ' + requiredEngine);
     }
     // Preserve the current synchronous Event Bus API before refactoring it.
