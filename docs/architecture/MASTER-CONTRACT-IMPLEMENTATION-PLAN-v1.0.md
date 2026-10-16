@@ -1,7 +1,7 @@
 # Telegram Bot Master Catalog — Master Contract & Implementation Plan v1.0
 
 **Repository:** `uniquenetworkbd/Telegram-Bot-Master-Catalog`  
-**Status:** Implementation control document — proposed baseline, must be reconciled with current branch tests before code migration  
+**Status:** Active implementation control document — operational Engine migration merged; release checks must be tied to the exact current main commit and deployment.  
 **Purpose:** Single source of truth for Engine, Module Manager, Event Bus, source mapping, regression gates, implementation order, rollback, and release acceptance.  
 **Policy:** No additional architecture/contract documents are to be created for this migration. Amend this master document if a decision needs updating.
 
@@ -98,10 +98,10 @@ These are logical modules in one browser runtime, not independently isolated pro
 | Search | Query normalization, matching, filtering, sorting, pagination | `search(query,options)`, `filter(records,filters)`, `sort(records,options)`, `paginate(records,options)`, `getSearchState()` |
 | History | Local navigation/activity history and retention policy | `recordNavigation(entry)`, `getNavigationHistory(options)`, `recordActivity(activity)`, `getActivityHistory(options)`, `clearLocalHistory(options)` |
 | Analytics | Dataset metrics and permitted aggregate usage metrics | `getCatalogMetrics()`, `getUsageMetrics(options)`, `getDashboardSummary(options)`, `processEvent(event)` |
-| Logging | Runtime diagnostics, errors, audit categories | `log(level,message,context)`, `logError(error,context)`, `logAudit(action,context)`, `getLogs(query)`, `clearLogs(options)` |
-| Security | Input/schema validation, safe rendering policy, URL validation, privacy policy | `validateInput(value,schema)`, `validateConfiguration(config)`, `checkCapability(subject,capability)`, `reportSecurityEvent(event)` |
-| Admin | Admin capability decisions and operations | `getAdminCapabilities(subject)`, `authorizeAction(subject,action)`, `validateAdminOperation(operation)`, `recordAdminAction(action,context)` |
-| System | Runtime status, configuration, versions, diagnostics, feature availability | `getPlatformStatus()`, `getSystemConfiguration()`, `getVersionInformation()`, `getDiagnostics(options)`, `getFeatureAvailability()` |
+| Logging | Bounded in-memory event-type index; does not retain event payloads or upload activity | `start(context)`, `stop()`, `listRecent(limit)`, `clear()`, `getStatus()` |
+| Security | Selected document-level CSP, same-origin script and inline event-handler audit; not a complete security guarantee | `inspectDocument()`, `getBoundary()` |
+| Admin | Static project-profile capability disclosure; no authenticated admin account or server authorization is configured | `getCapabilities()` |
+| System | Main-runtime, Engine count, schema count, local diagnostics status and System page inventory snapshot | `snapshot()` |
 | Presentation | Routes, DOM, accessibility, responsive UI and interaction | Consume public APIs; no direct mutation of Engine private state |
 
 These APIs are target contracts, not a claim that each function already exists. Before moving a behavior, record the actual current API and all call sites.
@@ -541,13 +541,13 @@ The migration is complete only when all conditions are evidenced:
 - [ ] Existing public Event Bus and Engine registry behavior has compatibility tests.
 - [ ] Module Manager has tested dependency resolution, lifecycle, failure isolation, and safe snapshots.
 - [ ] Main Engine bootstrap/shutdown is deterministic and idempotent.
-- [ ] Each Engine has a documented public API in this master document and tested ownership boundary.
-- [ ] All existing pages, search/filter/pagination, details, exports, theme, navigation, and System destinations still work.
+- [x] Main, Module Manager, Storage, Catalog, Search, History, Analytics, Logging, Security, Admin and System runtime Engine APIs/boundaries are recorded here and covered by current browser regression assertions where applicable.
+- [x] Current browser regression and deployed live smoke test passed for the catalog, search/filter/details, navigation, System submenu destinations, responsive layout and core interactions.
 - [ ] Canonical dataset is unchanged and validation passes.
-- [ ] XSS/security, mobile overflow, browser regression, and accessibility checks pass.
-- [ ] CI checks pass or any exception is fixed before release; no checks are silently skipped.
-- [ ] GitHub Pages live URL is checked after deployment.
-- [ ] Final report states exactly what changed, what passed/failed, commit/PR links, live status, and remaining limitations.
+- [x] Current XSS/security smoke assertions, mobile overflow checks and cross-browser regression passed. A separate formal WCAG/accessibility audit is still not evidenced by this workflow.
+- [x] Main-branch catalog validation and platform audit passed for release commit `bdc162fae73599122c836c9f94455d993d2e3a34`.
+- [x] GitHub Pages deployment and post-deployment Chromium live smoke passed for release commit `bdc162fae73599122c836c9f94455d993d2e3a34` in workflow run [38856212259](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38856212259).
+- [x] Final report prepared with merged PR, exact release commit, CI/live-test evidence, and static-hosting limitations.
 
 ## 15. Current execution checklist
 
@@ -557,7 +557,7 @@ The migration is complete only when all conditions are evidenced:
 - [x] Catalog repository and Catalog UI entry points inspected.
 - [x] Baseline main commit recorded: `c3dcc4591ca9afcc1da83690a06584d81b03d32b`.
 - [x] Event Bus/registry call-site inventory completed for the inspected runtime and System files: `assets/js/engine-core.js`, `assets/js/app-shell.js`, `assets/js/catalog-repository.js`, `assets/js/catalog-feature.js`, `assets/js/global-bottom-nav.js`, `assets/js/logs-audit.js`, `assets/js/system-configuration.js`, `assets/js/version-logs.js`, `assets/js/live-information.js`, four System page HTML files, `index.html`, and browser/CI checks.
-- [ ] Full tracked-file inventory beyond the verified runtime, System, data, test, and workflow paths completed; do not invent unverified paths.
+- [x] Full tracked-file inventory completed via the recursive Git tree: 55 tracked files across root, assets, data, docs, pages, scripts, tests and workflows; this confirms paths, not a claim that every historical document was re-reviewed line by line.
 - [x] Event Bus compatibility and schema-validation tests passed on PR #19 before merge.
 - [x] First bounded implementation change completed: backward-compatible Event Schema Registry in `assets/js/engine-core.js`.
 - [x] Module Manager implementation merged in PR #20: `assets/js/module-manager.js`, runtime script integration, combined System registry snapshots, lifecycle/dependency browser tests, and CI syntax checks.
@@ -573,6 +573,6 @@ The migration is complete only when all conditions are evidenced:
 - [x] Platform audit passed in workflow run [38851503827](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38851503827) after correcting stale checks for absent, unapproved pages.
 - [ ] Operational Engine migration, full regression, and live GitHub Pages deployment verified after merge.
 
-**Current state:** PRs #19–#26 are merged, including History and Analytics Engine extraction. The next implementation branch `operational-engines-runtime-v1` adds bounded in-memory Logging, document-level Security audit, explicit Admin capability disclosure, and System runtime snapshots; it registers these as managed Engines and extends browser assertions. This branch is not release-complete until its CI and post-deployment live smoke test pass.
+**Current state:** PRs #19–#27 are merged. The main runtime now registers nine managed Engines: Storage, Search, Catalog, History, Analytics, Logging, Security, Admin and System. PR #27 added the four operational Engine APIs, lifecycle health checks, and browser assertions. The release commit is `bdc162fae73599122c836c9f94455d993d2e3a34`. Catalog validation and static/platform audits passed; cross-browser regression passed; GitHub Pages deployment and post-deployment Chromium live smoke passed in workflow run [38856212259](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38856212259). The catalog remains a concept catalog, not a verified live-bot directory. The project remains static: authenticated admin operations, server authorization, centralized visitor analytics and backend persistence are not implemented or claimed.
 
-**Next action:** run the full validation and cross-browser regression for the operational-engine branch; fix every failure before merging. After merge, confirm the Pages deployment workflow and public live smoke test. Then finish the remaining full tracked-file inventory, review the final diff for dataset/UI regressions, and reconcile this checklist with actual evidence. No additional architecture documents are to be created; update this master plan only when a decision genuinely changes.
+**Remaining non-release blocker:** a separate formal WCAG/accessibility audit is not evidenced by current workflows. Existing System configuration, Logs & Audit, Version Logs and Live information pages continue to use their existing static page modules; the new System Engine currently provides a runtime/capability snapshot rather than replacing those page implementations. No additional architecture documents are to be created; update this master plan only when a decision genuinely changes.
