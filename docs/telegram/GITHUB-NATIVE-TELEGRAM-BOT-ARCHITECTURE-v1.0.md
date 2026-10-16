@@ -10,16 +10,17 @@
 - The browser Bot Engine is a module registry/contract layer, not a secure place for bot credentials.
 - `catalog-query` defines `/start`, `/help`, and `/search <keyword>` behavior against the canonical concept catalog through injected services.
 - The manual GitHub Actions workflow can send one fixed diagnostic message through Telegram's official `sendMessage` method.
-- A scheduled GitHub Actions poller runs every five minutes when `TELEGRAM_BOT_TOKEN` is configured. It calls `getUpdates`, dispatches `/start`, `/help`, and `/search`, replies through `sendMessage`, and saves only the update offset as a GitHub Actions artifact.
+- A scheduled GitHub Actions poller runs every five minutes only when the repository variable `TELEGRAM_BOT_ENABLED=true` is set and the `TELEGRAM_BOT_TOKEN` secret is configured. It calls `getUpdates`, dispatches `/start`, `/help`, and `/search`, replies through `sendMessage`, and saves only the update offset as a GitHub Actions artifact.
 - No Telegram token, chat ID, user message, or private configuration belongs in source code, CSV, HTML, browser storage, or logs.
 
 ## Required GitHub configuration
 
 1. Create a Telegram bot using Telegram's official BotFather and keep the token private.
 2. In repository **Settings → Secrets and variables → Actions → Secrets**, add `TELEGRAM_BOT_TOKEN`.
-3. In **Settings → Secrets and variables → Actions → Variables**, add `TELEGRAM_CHAT_ID` for a chat where the bot is allowed to send messages.
-4. Open **Actions → Telegram Bot API smoke test → Run workflow**.
-5. Verify that the workflow succeeds and that the fixed diagnostic message arrives in the intended chat.
+3. In **Settings → Secrets and variables → Actions → Variables**, set `TELEGRAM_BOT_ENABLED` to `true` only when you want to activate the scheduled poller.
+4. In the same Variables section, add `TELEGRAM_CHAT_ID` for a chat where the bot is allowed to receive the fixed smoke-test message.
+5. Open **Actions → Telegram Bot API smoke test → Run workflow**.
+6. Verify that the workflow succeeds and that the fixed diagnostic message arrives in the intended chat.
 
 Do not paste the token into issues, pull requests, chat messages, workflow inputs, or source files. If a token is exposed, revoke it with BotFather and replace the GitHub secret.
 
