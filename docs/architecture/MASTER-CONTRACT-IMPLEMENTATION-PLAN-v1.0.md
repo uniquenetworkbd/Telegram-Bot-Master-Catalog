@@ -1,6 +1,6 @@
 # Telegram Bot Master Catalog — Master Contract & Implementation Plan v1.0
 
-**Repository:** \`uniquenetworkbd/Telegram-Bot-Master-Catalog\`  
+**Repository:** `uniquenetworkbd/Telegram-Bot-Master-Catalog`  
 **Status:** Implementation control document — proposed baseline, must be reconciled with current branch tests before code migration  
 **Purpose:** Single source of truth for Engine, Module Manager, Event Bus, source mapping, regression gates, implementation order, rollback, and release acceptance.  
 **Policy:** No additional architecture/contract documents are to be created for this migration. Amend this master document if a decision needs updating.
@@ -18,33 +18,33 @@
 
 ## 2. Current source facts observed
 
-### 2.1 Event Bus in \`assets/js/engine-core.js\`
+### 2.1 Event Bus in `assets/js/engine-core.js`
 
 The current source has:
-- An in-memory \`listeners\` Map and \`engines\` Map.
-- \`publish(type, payload = {})\`, which creates a frozen outer event object shaped as \`{ type, at, payload }\`, calls exact-type listeners and wildcard \`*\` listeners, catches listener exceptions individually, and returns the event.
-- \`subscribe(type, callback)\`, which rejects non-functions, adds the callback, and returns an unsubscribe function.
-- A registry \`register(definition)\` with stable-ID syntax validation and duplicate-ID checks.
+- An in-memory `listeners` Map and `engines` Map.
+- `publish(type, payload = {})`, which creates a frozen outer event object shaped as `{ type, at, payload }`, calls exact-type listeners and wildcard `*` listeners, catches listener exceptions individually, and returns the event.
+- `subscribe(type, callback)`, which rejects non-functions, adds the callback, and returns an unsubscribe function.
+- A registry `register(definition)` with stable-ID syntax validation and duplicate-ID checks.
 - Local activity/diagnostics keys and safe storage read/write helpers.
 - Existing System UI integration and conceptual engine registration are present in this file; they must be inspected with all consumers before refactoring.
 
-Compatibility note: \`Object.freeze\` on the outer event does not deep-freeze \`payload\`. Subscriber mutation and cross-subscriber payload effects must be tested and handled deliberately, without silently changing existing consumers.
+Compatibility note: `Object.freeze` on the outer event does not deep-freeze `payload`. Subscriber mutation and cross-subscriber payload effects must be tested and handled deliberately, without silently changing existing consumers.
 
-### 2.2 Catalog repository in \`assets/js/catalog-repository.js\`
+### 2.2 Catalog repository in `assets/js/catalog-repository.js`
 
 Observed source characteristics:
 - Defines the canonical 13 CSV headers.
-- Loads \`./data/Telegram_Bot_Master_Catalog_1000.csv\`.
+- Loads `./data/Telegram_Bot_Master_Catalog_1000.csv`.
 - Parses CSV and validates the expected 1,000 records and unique/non-empty Bot IDs.
 - Exposes repository functionality consumed by Catalog UI. Preserve its public API until all call sites are mapped and migrated.
 
 Canonical fields:
-\`index\`, \`Bot ID\`, \`Category No\`, \`Category\`, \`English Category\`, \`Bot Name\`, \`What it does\`, \`Free/Low-cost Technology\`, \`API Required?\`, \`Automation Potential\`, \`Monetization Potential\`, \`Suggested MVP\`, \`Notes\`.
+`index`, `Bot ID`, `Category No`, `Category`, `English Category`, `Bot Name`, `What it does`, `Free/Low-cost Technology`, `API Required?`, `Automation Potential`, `Monetization Potential`, `Suggested MVP`, `Notes`.
 
-### 2.3 Catalog UI in \`assets/js/catalog-feature.js\`
+### 2.3 Catalog UI in `assets/js/catalog-feature.js`
 
 Observed source characteristics:
-- Uses \`window.TBMC.catalogRepository\` and \`window.TBMC.appShell\`.
+- Uses `window.TBMC.catalogRepository` and `window.TBMC.appShell`.
 - Owns UI state such as records, filtered results, and current page.
 - Uses escaped text for rendered category labels in chart/bar markup; all HTML insertion points must be audited by context during Security Engine work.
 - Contains metrics and System UI updates. UI must not become the source of truth for runtime health.
@@ -59,7 +59,7 @@ Observed source characteristics:
 
 ## 3. Target architecture and boundaries
 
-\`\`\`text
+```text
 Main Engine
 ├── Module Manager
 ├── Event Bus
@@ -82,7 +82,7 @@ Presentation Layer (not an Engine)
 ├── Admin Profile
 ├── System UI
 └── Navigation, shared controls, styles
-\`\`\`
+```
 
 These are logical modules in one browser runtime, not independently isolated processes. A future backend or service boundary requires a separate deployment/security design and must not be fabricated in the current static build.
 
@@ -90,18 +90,18 @@ These are logical modules in one browser runtime, not independently isolated pro
 
 | Component | Owns | Proposed public surface |
 |---|---|---|
-| Main Engine | Bootstrap, runtime readiness, shutdown | \`bootstrap(config)\`, \`getRuntimeInfo()\`, \`getState()\`, \`shutdown(options)\` |
-| Module Manager | Registration, metadata validation, dependencies, lifecycle, health snapshots | \`register(definition)\`, \`unregister(id)\`, \`validate(id)\`, \`resolveDependencies(id)\`, \`start(id)\`, \`stop(id)\`, \`restart(id)\`, \`enable(id)\`, \`disable(id)\`, \`getEngine(id)\`, \`listEngines()\`, \`getHealth(id)\` |
-| Event Bus | Event schema, publish/subscribe, dispatch, cleanup | Legacy-compatible \`publish(type,payload)\`, \`subscribe(type,callback)\`; add schema/version APIs only additively |
-| Storage | Canonical CSV loading/parsing/validation, normalized records | \`loadCatalog()\`, \`getRecordById(id)\`, \`getAllRecords()\`, \`getCategories()\`, \`getDatasetMetadata()\`, \`validateDataset(data)\` |
-| Catalog | Record/category access, detail lookup, export semantics | \`getCatalogSummary()\`, \`getBotById(id)\`, \`getBotsByCategory(id)\`, \`getCategories()\`, \`exportCatalog(options)\` |
-| Search | Query normalization, matching, filtering, sorting, pagination | \`search(query,options)\`, \`filter(records,filters)\`, \`sort(records,options)\`, \`paginate(records,options)\`, \`getSearchState()\` |
-| History | Local navigation/activity history and retention policy | \`recordNavigation(entry)\`, \`getNavigationHistory(options)\`, \`recordActivity(activity)\`, \`getActivityHistory(options)\`, \`clearLocalHistory(options)\` |
-| Analytics | Dataset metrics and permitted aggregate usage metrics | \`getCatalogMetrics()\`, \`getUsageMetrics(options)\`, \`getDashboardSummary(options)\`, \`processEvent(event)\` |
-| Logging | Runtime diagnostics, errors, audit categories | \`log(level,message,context)\`, \`logError(error,context)\`, \`logAudit(action,context)\`, \`getLogs(query)\`, \`clearLogs(options)\` |
-| Security | Input/schema validation, safe rendering policy, URL validation, privacy policy | \`validateInput(value,schema)\`, \`validateConfiguration(config)\`, \`checkCapability(subject,capability)\`, \`reportSecurityEvent(event)\` |
-| Admin | Admin capability decisions and operations | \`getAdminCapabilities(subject)\`, \`authorizeAction(subject,action)\`, \`validateAdminOperation(operation)\`, \`recordAdminAction(action,context)\` |
-| System | Runtime status, configuration, versions, diagnostics, feature availability | \`getPlatformStatus()\`, \`getSystemConfiguration()\`, \`getVersionInformation()\`, \`getDiagnostics(options)\`, \`getFeatureAvailability()\` |
+| Main Engine | Bootstrap, runtime readiness, shutdown | `bootstrap(config)`, `getRuntimeInfo()`, `getState()`, `shutdown(options)` |
+| Module Manager | Registration, metadata validation, dependencies, lifecycle, health snapshots | `register(definition)`, `unregister(id)`, `validate(id)`, `resolveDependencies(id)`, `start(id)`, `stop(id)`, `restart(id)`, `enable(id)`, `disable(id)`, `getEngine(id)`, `listEngines()`, `getHealth(id)` |
+| Event Bus | Event schema, publish/subscribe, dispatch, cleanup | Legacy-compatible `publish(type,payload)`, `subscribe(type,callback)`; add schema/version APIs only additively |
+| Storage | Canonical CSV loading/parsing/validation, normalized records | `loadCatalog()`, `getRecordById(id)`, `getAllRecords()`, `getCategories()`, `getDatasetMetadata()`, `validateDataset(data)` |
+| Catalog | Record/category access, detail lookup, export semantics | `getCatalogSummary()`, `getBotById(id)`, `getBotsByCategory(id)`, `getCategories()`, `exportCatalog(options)` |
+| Search | Query normalization, matching, filtering, sorting, pagination | `search(query,options)`, `filter(records,filters)`, `sort(records,options)`, `paginate(records,options)`, `getSearchState()` |
+| History | Local navigation/activity history and retention policy | `recordNavigation(entry)`, `getNavigationHistory(options)`, `recordActivity(activity)`, `getActivityHistory(options)`, `clearLocalHistory(options)` |
+| Analytics | Dataset metrics and permitted aggregate usage metrics | `getCatalogMetrics()`, `getUsageMetrics(options)`, `getDashboardSummary(options)`, `processEvent(event)` |
+| Logging | Runtime diagnostics, errors, audit categories | `log(level,message,context)`, `logError(error,context)`, `logAudit(action,context)`, `getLogs(query)`, `clearLogs(options)` |
+| Security | Input/schema validation, safe rendering policy, URL validation, privacy policy | `validateInput(value,schema)`, `validateConfiguration(config)`, `checkCapability(subject,capability)`, `reportSecurityEvent(event)` |
+| Admin | Admin capability decisions and operations | `getAdminCapabilities(subject)`, `authorizeAction(subject,action)`, `validateAdminOperation(operation)`, `recordAdminAction(action,context)` |
+| System | Runtime status, configuration, versions, diagnostics, feature availability | `getPlatformStatus()`, `getSystemConfiguration()`, `getVersionInformation()`, `getDiagnostics(options)`, `getFeatureAvailability()` |
 | Presentation | Routes, DOM, accessibility, responsive UI and interaction | Consume public APIs; no direct mutation of Engine private state |
 
 These APIs are target contracts, not a claim that each function already exists. Before moving a behavior, record the actual current API and all call sites.
@@ -109,11 +109,11 @@ These APIs are target contracts, not a claim that each function already exists. 
 ## 4. Shared Engine definition contract
 
 A new-format Engine definition must declare:
-- \`id\`: stable unique ID matching \`^[a-z][a-z0-9.-]{1,63}$\` unless the current implementation contract is explicitly revised.
-- \`name\`, \`description\`.
-- \`version\` and \`contractVersion\` using SemVer.
-- \`dependencies\`: dependency ID, version constraint, and required/optional flag.
-- \`capabilities\`, \`provides\`, \`publishes\`, \`subscribes\`.
+- `id`: stable unique ID matching `^[a-z][a-z0-9.-]{1,63}$` unless the current implementation contract is explicitly revised.
+- `name`, `description`.
+- `version` and `contractVersion` using SemVer.
+- `dependencies`: dependency ID, version constraint, and required/optional flag.
+- `capabilities`, `provides`, `publishes`, `subscribes`.
 - Supported lifecycle hooks and health/readiness policy.
 - Failure policy and, where relevant, data/privacy classification.
 
@@ -130,7 +130,7 @@ Rules:
 
 ### Lifecycle states
 
-Use the following target states: \`registered\`, \`validated\`, \`initialized\`, \`starting\`, \`active\`, \`degraded\`, \`failed\`, \`stopping\`, \`stopped\`, \`disabled\`, \`blocked\`, \`destroyed\`.
+Use the following target states: `registered`, `validated`, `initialized`, `starting`, `active`, `degraded`, `failed`, `stopping`, `stopped`, `disabled`, `blocked`, `destroyed`.
 
 The Manager is the only authority for lifecycle transitions. Invalid transitions return a structured error and do not corrupt state. An active state and a healthy health result are separate facts.
 
@@ -167,24 +167,24 @@ System UI displays ID/name, implementation and contract versions, lifecycle stat
 ### 6.1 Backward-compatible public API
 
 For the first implementation pass, keep these APIs and semantics:
-- \`publish(type, payload = {})\` returns the emitted event.
-- \`subscribe(type, callback)\` throws \`TypeError\` when callback is not a function and returns an unsubscribe function.
-- Exact-type and wildcard (\`*\`) subscribers both receive events.
+- `publish(type, payload = {})` returns the emitted event.
+- `subscribe(type, callback)` throws `TypeError` when callback is not a function and returns an unsubscribe function.
+- Exact-type and wildcard (`*`) subscribers both receive events.
 - Dispatch is synchronous in registration order within each subscriber list, unless baseline tests demonstrate a different existing behavior.
 - One subscriber exception is caught and must not stop unrelated subscribers.
 - Unsubscribe prevents subsequent delivery to that callback.
-- The current envelope \`{ type, at, payload }\` remains canonical during compatibility migration.
+- The current envelope `{ type, at, payload }` remains canonical during compatibility migration.
 - Do not change return shapes or convert dispatch to async as an incidental refactor.
 
 ### 6.2 Event envelope and payload
 
 Current envelope:
-\`\`\`js
+```js
 { type: "catalog.loaded", at: "ISO timestamp", payload: {} }
-\`\`\`
+```
 
 Target additive metadata may be introduced only with compatibility tests:
-\`\`\`js
+```js
 {
   type: "catalog.loaded",
   at: "ISO timestamp",
@@ -197,13 +197,13 @@ Target additive metadata may be introduced only with compatibility tests:
     privacy: "internal"
   }
 }
-\`\`\`
+```
 
-Do not rename \`type\` to \`name\`, \`at\` to \`timestamp\`, or change existing payload semantics until every subscriber and test is migrated. The outer event object may be frozen; decide and test payload immutability separately. Prefer defensive copies or schema-normalized payloads where feasible, but never silently change object identity if a consumer relies on it.
+Do not rename `type` to `name`, `at` to `timestamp`, or change existing payload semantics until every subscriber and test is migrated. The outer event object may be frozen; decide and test payload immutability separately. Prefer defensive copies or schema-normalized payloads where feasible, but never silently change object identity if a consumer relies on it.
 
 ### 6.3 Event naming and schema rules
 
-- Use lowercase dot-separated names such as \`engine.registered\`, \`engine.state_changed\`, \`catalog.loaded\`, \`catalog.search_used\`.
+- Use lowercase dot-separated names such as `engine.registered`, `engine.state_changed`, `catalog.loaded`, `catalog.search_used`.
 - Every event added after baseline capture must define: name, schema/version, publisher, allowed consumers, privacy class, delivery timing, failure policy, and whether it is persisted.
 - Event payloads carry data, never executable code.
 - Payload validation failures must be reported through a safe fallback that cannot recurse through the same failing event.
@@ -218,23 +218,23 @@ This list is the approved candidate set; only add an event to runtime after its 
 
 | Event | Publisher | Intended consumers | Classification |
 |---|---|---|---|
-| \`engine.registered\` | Module Manager | System, Logging | internal |
-| \`engine.validated\` | Module Manager | System, Logging | internal |
-| \`engine.state_changed\` | Module Manager | System, Logging | internal |
-| \`engine.health_changed\` | Module Manager | System, Logging | internal |
-| \`engine.start_failed\` | Module Manager | System, Logging | internal |
-| \`engine.stop_failed\` | Module Manager | System, Logging | internal |
-| \`engine.enabled\` / \`engine.disabled\` | Module Manager | System, Logging | internal |
-| \`engine.unregistered\` | Module Manager | System, Logging | internal |
-| \`module_manager.dependency_cycle_detected\` | Module Manager | System, Logging | internal |
-| \`catalog.loaded\` | Storage | Catalog, Analytics | internal |
-| \`catalog.search_used\` | Search/UI adapter | Analytics | usage metadata |
-| \`catalog.filter_changed\` | Search/UI adapter | Analytics | usage metadata |
-| \`catalog.details_opened\` | Catalog/UI adapter | History, Analytics | usage metadata |
-| \`storage.load_failed\` | Storage | Logging, System | internal |
-| \`security.validation_failed\` | Security | Logging, System | security event |
-| \`system.configuration_changed\` | System | Logging | configuration metadata |
-| \`navigation.changed\` | navigation adapter | History | local activity |
+| `engine.registered` | Module Manager | System, Logging | internal |
+| `engine.validated` | Module Manager | System, Logging | internal |
+| `engine.state_changed` | Module Manager | System, Logging | internal |
+| `engine.health_changed` | Module Manager | System, Logging | internal |
+| `engine.start_failed` | Module Manager | System, Logging | internal |
+| `engine.stop_failed` | Module Manager | System, Logging | internal |
+| `engine.enabled` / `engine.disabled` | Module Manager | System, Logging | internal |
+| `engine.unregistered` | Module Manager | System, Logging | internal |
+| `module_manager.dependency_cycle_detected` | Module Manager | System, Logging | internal |
+| `catalog.loaded` | Storage | Catalog, Analytics | internal |
+| `catalog.search_used` | Search/UI adapter | Analytics | usage metadata |
+| `catalog.filter_changed` | Search/UI adapter | Analytics | usage metadata |
+| `catalog.details_opened` | Catalog/UI adapter | History, Analytics | usage metadata |
+| `storage.load_failed` | Storage | Logging, System | internal |
+| `security.validation_failed` | Security | Logging, System | security event |
+| `system.configuration_changed` | System | Logging | configuration metadata |
+| `navigation.changed` | navigation adapter | History | local activity |
 
 Do not claim that every event in this table is currently emitted. Treat it as the planned registry.
 
@@ -244,7 +244,7 @@ Do not claim that every event in this table is currently emitted. Treat it as th
 - The Event Bus must not retain dead Engine callbacks after teardown.
 - Duplicate subscription behavior must be explicit; baseline behavior currently permits adding the same callback more than once.
 - Subscriber mutation of a shared payload must not silently alter the event for later subscribers. Capture the current behavior in tests before introducing defensive copies/freezing.
-- Subscriber errors are isolated per callback; do not throw a listener error back through \`publish\`.
+- Subscriber errors are isolated per callback; do not throw a listener error back through `publish`.
 - Add optional subscription IDs/listing only if required by diagnostics and privacy policy; do not expose callback functions.
 - Wildcard subscriber delivery and ordering are regression-protected.
 - No event history persistence is added by default.
@@ -274,14 +274,14 @@ Do not claim that every event in this table is currently emitted. Treat it as th
 - Local diagnostics are not central visitor analytics.
 
 ### Logging
-- Levels: \`debug\`, \`info\`, \`warn\`, \`error\`; audit is a separate category.
+- Levels: `debug`, `info`, `warn`, `error`; audit is a separate category.
 - Redact secrets and unnecessary personal data.
 - Distinguish browser-local logs from GitHub workflow/commit records.
 - Browser logs are not tamper-proof audit trails.
 - Logging failure must not crash unrelated functionality or recurse indefinitely.
 
 ### Security and Admin
-- Never render untrusted text as executable HTML; validate URLs by context and reject unsafe schemes such as \`javascript:\`.
+- Never render untrusted text as executable HTML; validate URLs by context and reject unsafe schemes such as `javascript:`.
 - Capability checks default to deny for sensitive operations when policy cannot be evaluated.
 - Client-side checks are not trusted server authorization.
 - A hidden admin route, browser-side role flag, or UI button does not create authentication.
@@ -290,7 +290,7 @@ Do not claim that every event in this table is currently emitted. Treat it as th
 
 ### System and Presentation
 - Module Manager is authoritative for Engine lifecycle; System UI is a consumer.
-- Preserve System destinations: System configuration, Logs & Audit, Version Logs, Live Information, including mobile \`More → System\`.
+- Preserve System destinations: System configuration, Logs & Audit, Version Logs, Live Information, including mobile `More → System`.
 - Preserve Home, Dashboard, Bot Catalog, Bot Details, Admin Profile, navigation, theme, export, keyboard and mobile interactions.
 - Show loading, empty, error, unavailable, and success distinctly.
 - UI status must reflect actual capability availability and source/timestamp where possible.
@@ -301,10 +301,10 @@ The repository previously had a 44-tracked-file mapping. This table identifies t
 
 | Priority | Source/path | Target owner | Migration rule |
 |---|---|---|---|
-| P0 | \`assets/js/engine-core.js\` | Main Engine, Module Manager, Event Bus, shared runtime adapter | Freeze API/event/registry baseline; refactor additively |
-| P0 | \`assets/js/catalog-repository.js\` | Storage Engine | Preserve public methods and CSV validation |
-| P0 | \`assets/js/catalog-feature.js\` | Catalog/Search UI adapter, metrics presentation | Move behavior only after API/call-site inventory |
-| P0 | \`data/Telegram_Bot_Master_Catalog_1000.csv\` | Storage data source | No content changes in engine migration |
+| P0 | `assets/js/engine-core.js` | Main Engine, Module Manager, Event Bus, shared runtime adapter | Freeze API/event/registry baseline; refactor additively |
+| P0 | `assets/js/catalog-repository.js` | Storage Engine | Preserve public methods and CSV validation |
+| P0 | `assets/js/catalog-feature.js` | Catalog/Search UI adapter, metrics presentation | Move behavior only after API/call-site inventory |
+| P0 | `data/Telegram_Bot_Master_Catalog_1000.csv` | Storage data source | No content changes in engine migration |
 | P0 | catalog validator script(s), workflow(s) | Validation/release gates | Keep and repair checks; never bypass failures |
 | P0 | browser regression/smoke scripts and acceptance checklist | Quality gates | Run baseline before and after each migration slice |
 | P1 | app shell, shared UI helpers, navigation and page scripts | Presentation adapters | Preserve selectors, routes, rendering and interaction |
@@ -314,7 +314,7 @@ The repository previously had a 44-tracked-file mapping. This table identifies t
 | P2 | CI/deployment workflow configuration | Release process | Do not change deployment semantics without explicit reason |
 
 ### Required inventory output before source edits
-Record each tracked file's current responsibility, imports/globals, public exports, DOM selectors, events published/subscribed, storage keys, test coverage, target owner, and migration status. Mark unverified items \`UNKNOWN\`; do not infer framework/library use from naming alone.
+Record each tracked file's current responsibility, imports/globals, public exports, DOM selectors, events published/subscribed, storage keys, test coverage, target owner, and migration status. Mark unverified items `UNKNOWN`; do not infer framework/library use from naming alone.
 
 ## 9. Regression baseline — mandatory before implementation
 
@@ -331,13 +331,13 @@ Run the available current-branch checks and record commit SHA, exact commands/wo
 
 ### Event Bus and Engine core baseline
 Add tests around current behavior before altering it:
-1. Publish returns an event with \`type\`, \`at\`, \`payload\`.
+1. Publish returns an event with `type`, `at`, `payload`.
 2. Exact-type subscriber receives event.
 3. Wildcard subscriber receives event.
 4. Exact and wildcard order is documented.
 5. Multiple subscribers run in registration order.
 6. A throwing subscriber does not prevent other subscribers.
-7. Invalid callback throws \`TypeError\`.
+7. Invalid callback throws `TypeError`.
 8. Unsubscribe prevents later delivery.
 9. Duplicate callback subscription behavior is captured.
 10. Repeated publish has distinct timestamps/events as expected.
@@ -353,7 +353,7 @@ Add tests around current behavior before altering it:
 - CSV/export behavior, theme/preferences, browser history and navigation.
 - Desktop and narrow mobile viewport; no horizontal overflow.
 - XSS payloads in catalog fields, search input, category/name labels, error messages, and Engine metadata are inert.
-- No remote script dependency added, no \`eval\`, \`new Function\`, or \`document.write\`.
+- No remote script dependency added, no `eval`, `new Function`, or `document.write`.
 - Keyboard navigation, focus behavior, and accessible labels for changed controls.
 - Browser storage unavailable/blocked behavior.
 
@@ -389,7 +389,7 @@ Add tests around current behavior before altering it:
 - One subscriber failure does not block the next.
 - Logging/Event Bus failure cannot recursively publish indefinitely.
 - Sensitive data is not persisted or emitted to analytics.
-- Compatibility adapter does not break \`{ type, at, payload }\`.
+- Compatibility adapter does not break `{ type, at, payload }`.
 
 ### End-to-end acceptance
 - Every existing user-visible feature remains available and behaves as before unless a documented defect is being corrected.
@@ -402,7 +402,7 @@ Add tests around current behavior before altering it:
 
 ### Phase 0 — Freeze and observe
 1. Record main commit SHA and working baseline.
-2. Search all \`publish\`, \`subscribe\`, \`register\`, \`listEngines\`, local-storage key, global \`TBMC\`, and Engine UI references.
+2. Search all `publish`, `subscribe`, `register`, `listEngines`, local-storage key, global `TBMC`, and Engine UI references.
 3. Run existing validation and browser/security checks.
 4. Add focused tests for current Event Bus and registry behavior before refactoring.
 5. Save exact results in PR description/check output; do not create another architecture document.
@@ -420,7 +420,7 @@ Add tests around current behavior before altering it:
 **Exit gate:** Existing event consumers pass and no listener leak or ordering regression is observed.
 
 ### Phase 2 — Module Manager adapter
-1. Preserve legacy \`register\` and \`listEngines\` signatures.
+1. Preserve legacy `register` and `listEngines` signatures.
 2. Add metadata validation and safe snapshots.
 3. Add dependency graph resolution as a pure function.
 4. Add lifecycle state transitions behind tests.
@@ -460,28 +460,28 @@ For each Engine:
 ## 12. Error model and observability
 
 Use a consistent structured error shape internally:
-\`\`\`js
+```js
 {
   code: "DEPENDENCY_CYCLE",
   message: "Safe, non-sensitive summary",
   engineId: "catalog",
   details: { dependencyPath: ["catalog", "storage", "catalog"] }
 }
-\`\`\`
+```
 
 Required codes include:
-- \`INVALID_ENGINE_DEFINITION\`
-- \`DUPLICATE_ENGINE_ID\`
-- \`MISSING_REQUIRED_DEPENDENCY\`
-- \`DEPENDENCY_CYCLE\`
-- \`VERSION_INCOMPATIBLE\`
-- \`LIFECYCLE_INVALID_STATE\`
-- \`ENGINE_START_FAILED\`
-- \`ENGINE_STOP_FAILED\`
-- \`EVENT_SCHEMA_INVALID\`
-- \`EVENT_SUBSCRIBER_FAILED\`
-- \`STORAGE_LOAD_FAILED\`
-- \`CAPABILITY_UNAVAILABLE\`
+- `INVALID_ENGINE_DEFINITION`
+- `DUPLICATE_ENGINE_ID`
+- `MISSING_REQUIRED_DEPENDENCY`
+- `DEPENDENCY_CYCLE`
+- `VERSION_INCOMPATIBLE`
+- `LIFECYCLE_INVALID_STATE`
+- `ENGINE_START_FAILED`
+- `ENGINE_STOP_FAILED`
+- `EVENT_SCHEMA_INVALID`
+- `EVENT_SUBSCRIBER_FAILED`
+- `STORAGE_LOAD_FAILED`
+- `CAPABILITY_UNAVAILABLE`
 
 Whether public APIs return structured results or throw typed errors must be consistent per API family. Do not mix styles unpredictably. UI receives safe codes and user-safe messages; diagnostics may hold more detail after redaction.
 
@@ -515,7 +515,7 @@ The migration is complete only when all conditions are evidenced:
 
 - [x] Existing Engine Contract Specification reviewed as an input.
 - [x] Existing Module Manager Contract Specification reviewed as an input.
-- [x] Current Event Bus public behavior inspected in \`assets/js/engine-core.js\`.
+- [x] Current Event Bus public behavior inspected in `assets/js/engine-core.js`.
 - [x] Catalog repository and Catalog UI entry points inspected.
 - [ ] Current main commit and workflow/test baseline recorded for this implementation run.
 - [ ] Repository-wide call-site inventory completed.
