@@ -305,8 +305,8 @@ async function main() {
     const analyticsEngineContract = await page.evaluate(() => {
       const analytics = window.TBMC.analyticsEngine;
       const sample = [
-        { 'Bot Name': 'Zeta', 'English Category': 'Ops', 'API Required?': 'Yes', 'Automation Potential': 'High' },
-        { 'Bot Name': 'Alpha', 'English Category': 'Ops', 'API Required?': 'No', 'Automation Potential': 'Medium' },
+        { 'Bot Name': 'Zeta', 'English Category': 'Ops', 'API Required?': 'Yes', 'Automation Potential': 'উচ্চ' },
+        { 'Bot Name': 'Alpha', 'English Category': 'Ops', 'API Required?': 'No', 'Automation Potential': 'মাঝারি' },
         { 'Bot Name': 'Beta', 'English Category': 'Network', 'API Required?': 'Yes', 'Automation Potential': 'উচ্চ' }
       ];
       const summary = analytics.summarize(sample);
@@ -333,7 +333,7 @@ async function main() {
     assert.equal(analyticsEngineContract.apiRequired, 2);
     assert.equal(analyticsEngineContract.highAutomation, 2);
     assert.deepEqual(analyticsEngineContract.categoryCounts, { Ops: 2, Network: 1 });
-    assert.deepEqual(analyticsEngineContract.automationCounts, { High: 1, Medium: 1, 'উচ্চ': 1 });
+    assert.deepEqual(analyticsEngineContract.automationCounts, { 'উচ্চ': 2, 'মাঝারি': 1, 'নিম্ন': 0, 'Other / unspecified': 0 });
 
     const mainEngineContract = await page.evaluate(async () => {
       const main = window.TBMC.mainEngine;
