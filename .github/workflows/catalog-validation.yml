@@ -2,7 +2,7 @@ name: Catalog validation
 
 on:
   push:
-    branches: [main, phase-1-mobile-app-foundation, phase-1-mobile-app-foundation-v2, phase-4c-4d-live-audit, phase-5-implementation-v1, feat/main-engine-runtime-v1, feat/github-native-bot-modules]
+    branches: [main, phase-1-mobile-app-foundation, phase-1-mobile-app-foundation-v2, phase-4c-4d-live-audit, phase-5-implementation-v1, feat/main-engine-runtime-v1, feat/github-native-bot-modules, feat/auth-otp-bot-engine-v1]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -25,6 +25,8 @@ jobs:
         run: python3 scripts/validate_catalog.py
       - name: Telegram module contract tests
         run: node --test tests/telegram-module-contract.mjs
+      - name: Authentication & OTP engine contract tests
+        run: node --test tests/auth-engine-contract.mjs
       - name: JavaScript syntax checks
         run: |
           node --check assets/js/catalog-repository.js
@@ -48,6 +50,9 @@ jobs:
           node --check assets/js/main-engine.js
           node --check assets/js/catalog-feature.js
           node --check assets/js/global-bottom-nav.js
+          node --check assets/js/auth-config.js
+          node --check assets/js/auth-engine.js
+          node --check worker/auth-engine/index.js
 
   browser-regression:
     name: Real-data browser regression, security and responsive tests
