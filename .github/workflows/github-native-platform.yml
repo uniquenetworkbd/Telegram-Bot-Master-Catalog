@@ -55,7 +55,7 @@ jobs:
           grep -qi "Live information" assets/js/global-bottom-nav.js
           grep -q "tbmc-bottom-navigation" assets/js/global-bottom-nav.js
           grep -q "themeSelect" pages/system-configuration.html
-          grep -q "version-logs.js" pages/version-logs.html
+          grep -q "Documented versions" pages/version-logs.html
           grep -q "live-information.js" pages/live-information.html
       - name: Validate runtime scripts
         run: |
@@ -71,7 +71,7 @@ jobs:
           echo "External backend providers: none"
           echo "Visitor analytics ingestion: not implemented or claimed"
           echo "Live Logs & Audit data: public GitHub REST API"
-          echo "Version Logs: automatically rendered from public repository commits"
+          echo "Version Logs: human-readable release notes only; commit history remains in Logs & Audit"
           echo "Live information: local browser runtime plus public repository signals"
           echo "Global real-time visitor counts: not available from static GitHub Pages"
           echo "Server-side automation: GitHub Actions"
