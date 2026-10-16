@@ -236,6 +236,45 @@ async function main() {
     assert.equal(schemaContract.listed, true);
     assert.match(schemaContract.duplicateSchema, /Duplicate event schema/);
 
+    const searchEngineContract = await page.evaluate(() => {
+      const search = window.TBMC.searchEngine;
+      const sample = [
+        { 'Bot Name': 'Zeta', 'English Category': 'Ops', 'API Required?': 'Yes', 'Automation Potential': 'High', Description: 'Mail delivery' },
+        { 'Bot Name': 'Alpha', 'English Category': 'Ops', 'API Required?': 'No', 'Automation Potential': 'Medium', Description: 'Queue helper' },
+        { 'Bot Name': 'Beta', 'English Category': 'Network', 'API Required?': 'Yes', 'Automation Potential': 'High', Description: 'Monitoring' }
+      ];
+      const originalOrder = sample.map(record => record['Bot Name']).join(',');
+      return {
+        available: Boolean(search && typeof search.filter === 'function' && typeof search.getFacets === 'function'),
+        normalized: search.normalize('  MAIL  '),
+        all: search.filter(sample, {}).map(record => record['Bot Name']),
+        query: search.filter(sample, { query: 'MAIL' }).map(record => record['Bot Name']),
+        category: search.filter(sample, { category: 'Ops' }).map(record => record['Bot Name']),
+        apiYes: search.filter(sample, { api: 'yes' }).map(record => record['Bot Name']),
+        apiNo: search.filter(sample, { api: 'no' }).map(record => record['Bot Name']),
+        automation: search.filter(sample, { automation: 'High' }).map(record => record['Bot Name']),
+        ascending: search.filter(sample, { sort: 'name-asc' }).map(record => record['Bot Name']),
+        descending: search.filter(sample, { sort: 'name-desc' }).map(record => record['Bot Name']),
+        byCategory: search.filter(sample, { sort: 'category' }).map(record => record['Bot Name']),
+        facets: search.getFacets(sample),
+        originalOrder,
+        unchanged: sample.map(record => record['Bot Name']).join(',') === originalOrder
+      };
+    });
+    assert.equal(searchEngineContract.available, true);
+    assert.equal(searchEngineContract.normalized, 'mail');
+    assert.deepEqual(searchEngineContract.all, ['Zeta', 'Alpha', 'Beta']);
+    assert.deepEqual(searchEngineContract.query, ['Zeta']);
+    assert.deepEqual(searchEngineContract.category, ['Zeta', 'Alpha']);
+    assert.deepEqual(searchEngineContract.apiYes, ['Zeta', 'Beta']);
+    assert.deepEqual(searchEngineContract.apiNo, ['Alpha']);
+    assert.deepEqual(searchEngineContract.automation, ['Zeta', 'Beta']);
+    assert.deepEqual(searchEngineContract.ascending, ['Alpha', 'Beta', 'Zeta']);
+    assert.deepEqual(searchEngineContract.descending, ['Zeta', 'Beta', 'Alpha']);
+    assert.deepEqual(searchEngineContract.byCategory, ['Beta', 'Alpha', 'Zeta']);
+    assert.deepEqual(searchEngineContract.facets, { categories: ['Network', 'Ops'], automation: ['High', 'Medium'], apiRequired: ['yes', 'no'] });
+    assert.equal(searchEngineContract.unchanged, true, 'Search filters must not mutate the source dataset');
+
     const mainEngineContract = await page.evaluate(async () => {
       const main = window.TBMC.mainEngine;
       const manager = window.TBMC.moduleManager;
@@ -255,6 +294,8 @@ async function main() {
         storageHealth: manager.getEngine('storage-engine')?.health.status,
         catalogState: manager.getEngine('catalog-engine')?.state,
         catalogHealth: manager.getEngine('catalog-engine')?.health.status,
+        searchState: manager.getEngine('search-engine')?.state,
+        searchHealth: manager.getEngine('search-engine')?.health.status,
         loadPromiseCached: datasetA === datasetB,
         runtimeReadySchema: window.TBMC.engineCore.getEventSchema('runtime.ready') !== null,
         catalogLoadedSchema: window.TBMC.engineCore.getEventSchema('catalog.loaded') !== null,
@@ -270,10 +311,12 @@ async function main() {
     assert.equal(mainEngineContract.storageHealth, 'healthy');
     assert.equal(mainEngineContract.catalogState, 'active');
     assert.equal(mainEngineContract.catalogHealth, 'healthy');
+    assert.equal(mainEngineContract.searchState, 'active');
+    assert.equal(mainEngineContract.searchHealth, 'healthy');
     assert.equal(mainEngineContract.loadPromiseCached, true, 'Storage and Catalog must share the validated dataset load');
     assert.equal(mainEngineContract.runtimeReadySchema, true);
     assert.equal(mainEngineContract.catalogLoadedSchema, true);
-    assert.equal(mainEngineContract.engineCount, 2);
+    assert.equal(mainEngineContract.engineCount, 3);
 
     const moduleManagerContract = await page.evaluate(async () => {
       const manager = window.TBMC.moduleManager;
