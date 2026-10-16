@@ -57,6 +57,7 @@ jobs:
       - name: Validate runtime scripts
         run: |
           node --check assets/js/engine-core.js
+          node --check assets/js/history-engine.js
           node --check assets/js/module-manager.js
           node --check assets/js/search-engine.js
           node --check assets/js/main-engine.js
