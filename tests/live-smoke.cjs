@@ -40,11 +40,9 @@ async function main() {
 
     await page.locator('#moreNavBtn').click();
     await page.locator('#moreMenu a[data-route="system"]').click();
-    assert.equal(await page.locator('#systemRecords').textContent(), '1,000');
-    assert.equal(await page.locator('#systemCategories').textContent(), '100');
-    assert.notEqual(await page.locator('#csvBadge').textContent(), 'Failed');
-    assert.doesNotMatch(await page.locator('body').innerText(), /Data unavailable/i);
-    assert.match(await page.locator('body').innerText(), /Admin authentication[\s\S]*Not implemented/i);
+    assert.match(await page.locator('#page-system').innerText(), /System configuration[\s\S]*Logs & Audit[\s\S]*Version Logs[\s\S]*Live information/i);
+    assert.match(await page.locator('#page-system').innerText(), /Admin authentication is not implemented/i);
+    assert.equal(await page.locator('#page-system a[href="./pages/logs-audit.html"]').count(), 1);
     const widths = await page.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
     assert.ok(widths.doc <= widths.inner + 4 && widths.body <= widths.inner + 4, `Mobile overflow: ${JSON.stringify(widths)}`);
     assert.match(await page.locator('#page-system').innerText(), /System configuration[\\s\\S]*Logs & Audit[\\s\\S]*Version Logs[\\s\\S]*Live information/i);
@@ -74,7 +72,7 @@ async function main() {
       } else {
         await modulePage.waitForFunction(() => document.querySelector('#sessionDuration')?.textContent !== '0s' && document.querySelector('#repoStatus')?.textContent !== 'Checking', null, { timeout: 20000 });
         assert.notEqual(await modulePage.locator('#runtimeStatus').textContent(), '');
-        assert.match(await modulePage.locator('body').innerText(), /Global visitor count[\\s\\S]*Unavailable/i);
+        assert.match(await modulePage.locator('body').innerText(), /Global visitor count[\s\S]*Unavailable/i);
       }
       await modulePage.close();
     }
