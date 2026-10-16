@@ -15,6 +15,9 @@ export function parseCsv(source) {
         } else {
           quoted = false;
         }
+      } else if (char === '\r') {
+        field += '\n';
+        if (input[i + 1] === '\n') i += 1;
       } else {
         field += char;
       }
