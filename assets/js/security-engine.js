@@ -6,8 +6,8 @@
     if (!csp) findings.push({ code: 'CSP_MISSING', severity: 'error' });
     else {
       const policy = csp.getAttribute('content') || '';
-      if (!/script-src\\s+[^;]*'self'/.test(policy)) findings.push({ code: 'SCRIPT_POLICY_MISSING', severity: 'error' });
-      if (!/object-src\\s+'none'/.test(policy)) findings.push({ code: 'OBJECT_POLICY_MISSING', severity: 'warning' });
+      if (!/script-src\s+[^;]*'self'/.test(policy)) findings.push({ code: 'SCRIPT_POLICY_MISSING', severity: 'error' });
+      if (!/object-src\s+'none'/.test(policy)) findings.push({ code: 'OBJECT_POLICY_MISSING', severity: 'warning' });
     }
     document.querySelectorAll('script[src]').forEach(script => {
       try {
