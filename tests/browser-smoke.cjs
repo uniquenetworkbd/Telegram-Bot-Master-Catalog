@@ -422,6 +422,8 @@ async function main() {
     assert.equal(mainEngineContract.systemHealth, 'healthy');
     assert.equal(mainEngineContract.botState, 'active');
     assert.equal(mainEngineContract.botHealth, 'healthy');
+    assert.equal(mainEngineContract.authState, 'degraded', 'OTP engine must disclose that its backend is not configured');
+    assert.equal(mainEngineContract.authHealth, 'degraded');
     assert.equal(mainEngineContract.botModuleCount, 1);
     assert.equal(mainEngineContract.botStatus.tokenAvailableToBrowser, false);
     assert.equal(mainEngineContract.botStatus.persistentRuntime, false);
