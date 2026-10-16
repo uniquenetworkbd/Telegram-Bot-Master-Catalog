@@ -89,6 +89,39 @@
     return error;
   }
 
+  function ensureAnalyticsEngine() {
+    if (manager.getEngine('analytics-engine')) return;
+    manager.register({
+      id: 'analytics-engine',
+      name: 'Analytics Engine',
+      version: VERSION,
+      contractVersion: VERSION,
+      description: 'Computes aggregate catalog counts and chart data without persisting visitor queries.',
+      dependencies: [{ id: 'storage-engine', version: '^1.0.0' }],
+      capabilities: ['record counts', 'category metrics', 'API requirement metrics', 'automation metrics'],
+      provides: ['catalog.analytics', 'catalog.facets-metrics'],
+      publishes: [],
+      subscribes: [],
+      lifecycle: {
+        validate: () => Boolean(window.TBMC.analyticsEngine && typeof window.TBMC.analyticsEngine.summarize === 'function'),
+        init: async () => {},
+        start: async () => {},
+        healthCheck: async () => {
+          if (!window.TBMC.analyticsEngine || typeof window.TBMC.analyticsEngine.summarize !== 'function') {
+            return { status: 'unhealthy', detail: 'Analytics Engine API is unavailable' };
+          }
+          const dataset = await repository.load();
+          const summary = window.TBMC.analyticsEngine.summarize(dataset.records);
+          return summary.totalRecords === 1000 && summary.totalCategories === 100
+            ? { status: 'healthy', detail: 'Aggregate metrics match the validated catalog dataset' }
+            : { status: 'unhealthy', detail: 'Aggregate metrics do not match the catalog release contract' };
+        },
+        stop: async () => {},
+        destroy: async () => {}
+      }
+    });
+  }
+
   function ensureHistoryEngine() {
     if (manager.getEngine('history-engine')) return;
     manager.register({
@@ -194,8 +227,10 @@
       ensureHistoryEngine();
       ensureSearchEngine();
       ensureCatalogEngine();
+      ensureAnalyticsEngine();
       await manager.start('catalog-engine');
       await manager.start('history-engine');
+      await manager.start('analytics-engine');
       const storage = manager.getEngine('storage-engine');
       const catalog = manager.getEngine('catalog-engine');
       if (!storage || !catalog || !['active', 'degraded'].includes(storage.state) ||
@@ -233,7 +268,7 @@
     core.publish('runtime.shutdown_started', { version: VERSION });
     state.shutdownPromise = (async () => {
       const failures = [];
-      for (const id of ['history-engine', 'catalog-engine', 'search-engine', 'storage-engine']) {
+      for (const id of ['history-engine', 'catalog-engine', 'search-engine', 'analytics-engine', 'storage-engine']) {
         const engine = manager.getEngine(id);
         if (!engine || !['active', 'degraded', 'failed', 'initialized', 'starting', 'blocked'].includes(engine.state)) continue;
         try { await manager.stop(id); }
