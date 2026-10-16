@@ -47,6 +47,38 @@ async function main() {
     assert.match(await page.locator('body').innerText(), /Admin authentication[\s\S]*Not implemented/i);
     const widths = await page.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
     assert.ok(widths.doc <= widths.inner + 4 && widths.body <= widths.inner + 4, `Mobile overflow: ${JSON.stringify(widths)}`);
+    assert.match(await page.locator('#page-system').innerText(), /System configuration[\\s\\S]*Logs & Audit[\\s\\S]*Version Logs[\\s\\S]*Live information/i);
+    for (const [path, heading] of [
+      ['pages/system-configuration.html', 'System configuration'],
+      ['pages/version-logs.html', 'Version Logs'],
+      ['pages/live-information.html', 'Live information']
+    ]) {
+      const modulePage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      modulePage.on('pageerror', e => pageErrors.push(path + ': ' + e.message));
+      modulePage.on('response', r => {
+        if (r.url().startsWith(new URL(BASE).origin) && r.status() >= 400) badResponses.push(`${r.status()} ${r.url()}`);
+      });
+      await modulePage.goto(new URL(path, BASE).href, { waitUntil: 'networkidle', timeout: 30000 });
+      assert.match(await modulePage.locator('h1').textContent(), new RegExp(heading, 'i'));
+      assert.ok(await modulePage.locator('.system-subnav a').count() === 4, path + ': system submenu links missing');
+      const moduleWidths = await modulePage.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
+      assert.ok(moduleWidths.doc <= moduleWidths.inner + 4 && moduleWidths.body <= moduleWidths.inner + 4, path + ': mobile overflow ' + JSON.stringify(moduleWidths));
+      if (path.includes('system-configuration')) {
+        await modulePage.locator('#themeSelect').selectOption('dark');
+        await modulePage.locator('#saveSettings').click();
+        assert.equal(await modulePage.locator('html').getAttribute('data-theme'), 'dark');
+        await modulePage.locator('#resetSettings').click();
+      } else if (path.includes('version-logs')) {
+        await modulePage.waitForFunction(() => Number(document.querySelector('#versionCount')?.textContent) > 0, null, { timeout: 20000 });
+        assert.ok(await modulePage.locator('.version-card').count() > 0, 'Version history cards were not rendered');
+      } else {
+        await modulePage.waitForFunction(() => document.querySelector('#sessionDuration')?.textContent !== '0s' && document.querySelector('#repoStatus')?.textContent !== 'Checking', null, { timeout: 20000 });
+        assert.notEqual(await modulePage.locator('#runtimeStatus').textContent(), '');
+        assert.match(await modulePage.locator('body').innerText(), /Global visitor count[\\s\\S]*Unavailable/i);
+      }
+      await modulePage.close();
+    }
+
     const auditPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
     auditPage.on('pageerror', e => pageErrors.push('Logs & Audit: ' + e.message));
     auditPage.on('response', r => {
