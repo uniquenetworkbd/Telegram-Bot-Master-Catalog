@@ -2,7 +2,7 @@ name: Catalog validation
 
 on:
   push:
-    branches: [main, phase-1-mobile-app-foundation, phase-1-mobile-app-foundation-v2, phase-4c-4d-live-audit, phase-5-implementation-v1, feat/main-engine-runtime-v1]
+    branches: [main, phase-1-mobile-app-foundation, phase-1-mobile-app-foundation-v2, phase-4c-4d-live-audit, phase-5-implementation-v1, feat/main-engine-runtime-v1, feat/github-native-bot-modules]
   pull_request:
     branches: [main]
   workflow_dispatch:
