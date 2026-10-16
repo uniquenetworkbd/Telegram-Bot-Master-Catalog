@@ -52,7 +52,7 @@ jobs:
           node --check assets/js/global-bottom-nav.js
           node --check assets/js/auth-config.js
           node --check assets/js/auth-engine.js
-          node --check worker/auth-engine/index.js
+          node --input-type=module --check < worker/auth-engine/index.js
 
   browser-regression:
     name: Real-data browser regression, security and responsive tests
