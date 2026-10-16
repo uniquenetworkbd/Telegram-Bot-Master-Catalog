@@ -180,9 +180,24 @@
       window.setTimeout(() => window.location.assign('./login.html'), 1200);
     }
   }
+  async function redirectIfSessionActive() {
+    if (!apiBase || !formStart) return;
+    try {
+      const result = await request('/api/auth/me');
+      if (result.authenticated) {
+        setStatus('Your existing session is still active. Returning to the workspace without requesting another OTP.', 'success');
+        window.location.assign('./index.html');
+      }
+    } catch (_) {
+      // No session is expected for signed-out visitors; the login form remains available.
+    }
+  }
   function init() {
     if (!apiBase) setStatus('Backend not configured. OTP verification is deliberately disabled until a real authentication API is deployed.', 'error');
-    if (formStart) formStart.addEventListener('submit', startChallenge);
+    if (formStart) {
+      formStart.addEventListener('submit', startChallenge);
+      redirectIfSessionActive();
+    }
     if (formVerify) formVerify.addEventListener('submit', verifyChallenge);
     if (logoutButton) logoutButton.addEventListener('click', logout);
     if (formVerify) {
