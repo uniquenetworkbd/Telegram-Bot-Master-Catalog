@@ -368,6 +368,10 @@ async function main() {
         adminHealth: manager.getEngine('admin-engine')?.health.status,
         systemState: manager.getEngine('system-engine')?.state,
         systemHealth: manager.getEngine('system-engine')?.health.status,
+        botState: manager.getEngine('bot-engine')?.state,
+        botHealth: manager.getEngine('bot-engine')?.health.status,
+        botModuleCount: window.TBMC.botEngine.listModules().length,
+        botStatus: window.TBMC.botEngine.getStatus(),
         loggingStatus: window.TBMC.loggingEngine.getStatus(),
         securityReport: window.TBMC.securityEngine.inspectDocument(),
         adminCapabilities: window.TBMC.adminEngine.getCapabilities(),
@@ -401,6 +405,11 @@ async function main() {
     assert.equal(mainEngineContract.adminHealth, 'healthy');
     assert.equal(mainEngineContract.systemState, 'active');
     assert.equal(mainEngineContract.systemHealth, 'healthy');
+    assert.equal(mainEngineContract.botState, 'active');
+    assert.equal(mainEngineContract.botHealth, 'healthy');
+    assert.equal(mainEngineContract.botModuleCount, 1);
+    assert.equal(mainEngineContract.botStatus.tokenAvailableToBrowser, false);
+    assert.equal(mainEngineContract.botStatus.persistentRuntime, false);
     assert.equal(mainEngineContract.loggingStatus.listening, true);
     assert.ok(mainEngineContract.loggingStatus.entryCount > 0);
     assert.equal(mainEngineContract.securityReport.passed, true);
@@ -408,11 +417,53 @@ async function main() {
     assert.equal(mainEngineContract.adminCapabilities.authenticationConfigured, false);
     assert.equal(mainEngineContract.adminCapabilities.serverAuthorizationEnforced, false);
     assert.equal(mainEngineContract.systemSnapshot.runtimeState, 'ready');
-    assert.equal(mainEngineContract.systemSnapshot.engineCount, 9);
+    assert.equal(mainEngineContract.systemSnapshot.engineCount, 10);
     assert.equal(mainEngineContract.loadPromiseCached, true, 'Storage and Catalog must share the validated dataset load');
     assert.equal(mainEngineContract.runtimeReadySchema, true);
     assert.equal(mainEngineContract.catalogLoadedSchema, true);
-    assert.equal(mainEngineContract.engineCount, 9);
+    assert.equal(mainEngineContract.engineCount, 10);
+
+    const botModuleContract = await page.evaluate(async () => {
+      const bot = window.TBMC.botEngine;
+      const start = await bot.dispatch('catalog-query', { message: { chat: { id: 12345 }, text: '/start' } });
+      const usage = await bot.dispatch('catalog-query', { message: { chat: { id: 12345 }, text: '/search' } });
+      const search = await bot.dispatch('catalog-query', {
+        message: { chat: { id: 12345 }, text: '/search alpha' },
+        services: undefined
+      }, {
+        services: {
+          catalogRepository: { load: async () => ({ records: [
+            { 'Bot ID': 'B001', 'Bot Name': 'Alpha Catalog Helper', 'English Category': 'Utilities' },
+            { 'Bot ID': 'B002', 'Bot Name': 'Beta Status Bot', 'English Category': 'Monitoring' }
+          ] }) },
+          searchEngine: { filter: (records, options) => records.filter(record =>
+            record['Bot Name'].toLowerCase().includes(options.query.toLowerCase())) }
+        }
+      });
+      let duplicate = '';
+      try {
+        bot.registerModule({
+          id: 'catalog-query', name: 'Duplicate', version: '1.0.0',
+          description: 'Duplicate registration test', commands: [], capabilities: [], handler: async () => null
+        });
+      } catch (error) { duplicate = error.message; }
+      let invalid = '';
+      try {
+        bot.registerModule({
+          id: 'Invalid Module', name: 'Invalid', version: '1.0.0',
+          description: 'Invalid ID test', commands: [], capabilities: [], handler: async () => null
+        });
+      } catch (error) { invalid = error.name; }
+      return { start, usage, search, duplicate, invalid, modules: bot.listModules() };
+    });
+    assert.equal(botModuleContract.start.chat_id, 12345);
+    assert.match(botModuleContract.start.text, /\/search/);
+    assert.equal(botModuleContract.usage.text, 'Usage: /search <keyword>');
+    assert.equal(botModuleContract.search.chat_id, 12345);
+    assert.match(botModuleContract.search.text, /Alpha Catalog Helper/);
+    assert.match(botModuleContract.duplicate, /Duplicate bot module ID/);
+    assert.equal(botModuleContract.invalid, 'TypeError');
+    assert.deepEqual(botModuleContract.modules.map(module => module.id), ['catalog-query']);
 
     const moduleManagerContract = await page.evaluate(async () => {
       const manager = window.TBMC.moduleManager;
