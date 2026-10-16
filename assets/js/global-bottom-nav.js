@@ -56,6 +56,13 @@
     toggle.setAttribute('aria-expanded', String(open));
     panel.hidden = !open;
   });
+  document.querySelectorAll('[data-open-system-menu]').forEach(button => button.addEventListener('click', () => {
+    toggle.setAttribute('aria-expanded','true');
+    panel.hidden = false;
+    systemToggle.setAttribute('aria-expanded','true');
+    systemLinks.hidden = false;
+    toggle.focus();
+  }));
   systemToggle.addEventListener('click', () => {
     const open = systemToggle.getAttribute('aria-expanded') !== 'true';
     systemToggle.setAttribute('aria-expanded', String(open));
