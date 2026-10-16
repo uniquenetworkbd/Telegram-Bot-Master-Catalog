@@ -1,8 +1,6 @@
 -- Authentication & OTP Bot Engine v1.0
 -- Cloudflare D1 schema. Apply with: wrangler d1 execute <DB_NAME> --file=worker/schema.sql
 
-PRAGMA foreign_keys = ON;
-
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   telegram_user_id TEXT NOT NULL UNIQUE,
