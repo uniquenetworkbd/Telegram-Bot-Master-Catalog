@@ -38,7 +38,7 @@
     const prefix = constraint[0];
     const rangeVersion = parseVersion(prefix === '^' || prefix === '~' ? constraint.slice(1) : constraint);
     if (!actualVersion || !rangeVersion || (prefix !== '^' && prefix !== '~')) return false;
-    if (compareVersion(actualVersion, rangeVersion) < 0) return false;
+    if (String(actual).includes('-') || compareVersion(actualVersion, rangeVersion) < 0) return false;
     if (prefix === '~') return actualVersion[0] === rangeVersion[0] && actualVersion[1] === rangeVersion[1];
     if (rangeVersion[0] > 0) return actualVersion[0] === rangeVersion[0];
     if (rangeVersion[1] > 0) return actualVersion[0] === 0 && actualVersion[1] === rangeVersion[1];
@@ -276,7 +276,8 @@
     let startAttempted = false;
     try {
       setState(record, 'validated', { status: 'unknown', detail: 'Dependencies validated' });
-      await invokeHook(record, 'validate', context);
+      const validationResult = await invokeHook(record, 'validate', context);
+      if (validationResult === false) throw managerError('ENGINE_VALIDATION_FAILED', 'Engine validation hook rejected startup', { engineId: record.id });
       initAttempted = true;
       await invokeHook(record, 'init', context);
       setState(record, 'initialized', { status: 'unknown', detail: 'Initialization complete' });
@@ -427,24 +428,30 @@
   }
 
   async function unregister(id, options = {}) {
-    const record = records.get(id);
-    if (!record) throw managerError('ENGINE_NOT_FOUND', 'Managed Engine not found: ' + id);
-    const dependents = allDependents(id);
-    if (dependents.length && options.cascade !== true) {
-      throw managerError('DEPENDENTS_REGISTERED', 'Cannot unregister Engine while required dependents are registered', {
-        engineId: id, dependentIds: dependents.map(item => item.id)
-      });
-    }
-    if (options.cascade === true) {
-      for (const dependent of dependents.sort((a, b) => a.id.localeCompare(b.id)).reverse()) {
-        await unregister(dependent.id, { cascade: true });
+    const visited = new Set();
+    async function remove(currentId) {
+      if (visited.has(currentId)) return;
+      visited.add(currentId);
+      const record = records.get(currentId);
+      if (!record) throw managerError('ENGINE_NOT_FOUND', 'Managed Engine not found: ' + currentId);
+      const dependents = allDependents(currentId);
+      if (dependents.length && options.cascade !== true) {
+        throw managerError('DEPENDENTS_REGISTERED', 'Cannot unregister Engine while required dependents are registered', {
+          engineId: currentId, dependentIds: dependents.map(item => item.id)
+        });
       }
+      if (options.cascade === true) {
+        for (const dependent of dependents.sort((a, b) => a.id.localeCompare(b.id)).reverse()) {
+          await remove(dependent.id);
+        }
+      }
+      if (['active', 'degraded', 'failed', 'initialized', 'starting', 'blocked'].includes(record.state)) {
+        await stop(currentId, { cascade: options.cascade === true });
+      }
+      records.delete(currentId);
+      core.publish('engine.unregistered', { id: currentId });
     }
-    if (['active', 'degraded', 'failed', 'initialized', 'starting', 'blocked'].includes(record.state)) {
-      await stop(id, { cascade: options.cascade === true });
-    }
-    records.delete(id);
-    core.publish('engine.unregistered', { id });
+    await remove(id);
     return { id, removed: true };
   }
 
