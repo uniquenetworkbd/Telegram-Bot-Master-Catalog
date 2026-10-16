@@ -245,7 +245,25 @@ This list is the approved candidate set; only add an event to runtime after its 
 
 Do not claim that every event in this table is currently emitted. Treat it as the planned registry.
 
-### 6.5 Subscriber cleanup and failure isolation
+### 6.5 Built-in v1 schemas registered in Engine Core
+
+The runtime now registers payload validators before any legacy Engine registration publishes its first event. The schemas cover:
+- `engine.registered`
+- `engine.state_changed`
+- `engine.start_failed`
+- `engine.stop_failed`
+- `engine.enabled`
+- `engine.disabled`
+- `engine.unregistered`
+- `activity.recorded`
+- `diagnostics.preference_changed`
+- `activity.cleared`
+- `navigation.changed`
+- `catalog.search_used`
+
+These validators check only the documented fields needed by current publishers. The search event contains only a boolean indicating whether the query is non-empty; it does not include the search text. Event names not registered in the schema map retain legacy behavior. The test suite must verify that every current publisher payload passes and that malformed payloads are rejected before subscriber dispatch.
+
+### 6.6 Subscriber cleanup and failure isolation
 
 - A subscription handle is private to its owner and must be invoked during stop/destroy.
 - The Event Bus must not retain dead Engine callbacks after teardown.
@@ -534,8 +552,9 @@ The migration is complete only when all conditions are evidenced:
 - [ ] Full tracked-file inventory beyond the verified runtime, System, data, test, and workflow paths completed; do not invent unverified paths.
 - [x] Event Bus compatibility and schema-validation tests passed on PR #19 before merge.
 - [x] First bounded implementation change completed: backward-compatible Event Schema Registry in `assets/js/engine-core.js`.
-- [x] Module Manager implementation started in branch `module-manager-lifecycle-v1`: new `assets/js/module-manager.js`, runtime script integration, combined System registry snapshots, and lifecycle/dependency browser tests.
+- [x] Module Manager implementation merged in PR #20: `assets/js/module-manager.js`, runtime script integration, combined System registry snapshots, lifecycle/dependency browser tests, and CI syntax checks.
 - [x] Module Manager static/data checks and browser regression passed on code/test commit `ac38067666f2d3f0656207ac5ad76ffc8a0288ac`: Catalog validation run [38852328985](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38852328985), platform audit run [38852328926](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38852328926).
+- [x] Built-in Event Bus schema registration implemented in `assets/js/engine-core.js`; browser assertions added for valid/invalid built-in payloads. Current PR #21 CI is the acceptance gate for this slice.
 - [x] Catalog data/static validation passed in workflow run [38851503758](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38851503758).
 - [x] Browser regression passed in the same run: Chromium, Firefox and WebKit; 1,000 records / 100 categories; search/filter/details/history/pagination/export/theme/System/XSS checks; mobile 390px and desktop 1440px; zero uncaught page errors and local HTTP errors.
 - [x] Platform audit passed in workflow run [38851503827](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38851503827) after correcting stale checks for absent, unapproved pages.
@@ -543,4 +562,4 @@ The migration is complete only when all conditions are evidenced:
 
 **Current state:** the source, tests, workflow correction and master plan are in PR #19. CI passed on the current code/test commit; live deployment is not yet claimed because the PR has not been merged and the live URL has not been verified.
 
-**Next action:** complete the remaining tracked-file inventory before extracting Catalog/Storage/Search behavior; then migrate one Engine at a time with tests in the same change. Module Manager implementation is in PR #20; verify its final head checks, merge it, and verify the main branch/live deployment separately. No additional contract/architecture documents are to be created; update this master plan only when a decision genuinely changes.
+**Next action:** validate PR #21's built-in event schemas, then implement Main Engine bootstrap/readiness/shutdown and continue one Engine migration at a time. Complete the remaining tracked-file inventory before broad Catalog/Storage/Search extraction. No additional contract/architecture documents are to be created; update this master plan only when a decision genuinely changes.
