@@ -9,7 +9,11 @@ A mobile-first, data-driven catalog interface for exploring Telegram bot **conce
 - **BotCatalog** — search, filtering, sorting, and record browsing.
 - **Bot Details** — the available information for a selected record.
 - **Admin Profile** — public project/maintainer information.
-- **System** — appearance preferences and runtime/data status.
+- **System** — dedicated submenu for System configuration, Logs & Audit, Version Logs and Live information.
+  - **System configuration** — browser-local theme, density and reduced-motion preferences.
+  - **Logs & Audit** — public GitHub Actions workflow runs and repository commits.
+  - **Version Logs** — automatic revision cards derived from repository commit history.
+  - **Live information** — browser runtime signals and public repository activity; global visitor counts are not exposed by static GitHub Pages.
 
 ## Product blueprints
 
