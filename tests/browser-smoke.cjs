@@ -253,6 +253,7 @@ async function main() {
       manager.register(definition('test-mm-consumer', [{ id: 'test-mm-dependency', version: '^1.0.0' }]));
       const plan = manager.resolveDependencies('test-mm-consumer');
       const started = await manager.start('test-mm-consumer');
+      const initialDependencyState = manager.getEngine('test-mm-dependency').state;
       const dependencySnapshot = manager.getEngine('test-mm-dependency');
       dependencySnapshot.dependencies.push('mutated-snapshot');
       const snapshotIsolated = !manager.getEngine('test-mm-dependency').dependencies.includes('mutated-snapshot');
@@ -300,7 +301,7 @@ async function main() {
         plan: plan.order,
         warnings: plan.warnings,
         started: started.state,
-        dependencyState: manager.getEngine('test-mm-dependency').state,
+        dependencyState: initialDependencyState,
         snapshotIsolated,
         stopProviderError,
         cleanupIsolated,
