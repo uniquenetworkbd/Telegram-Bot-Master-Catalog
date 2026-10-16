@@ -205,10 +205,16 @@ async function verifyOtp(request, env) {
   const expectedHash = await otpHash(env, challengeId, otp);
   if (expectedHash !== challenge.otp_hash) {
     const attempts = challenge.attempts + 1;
-    await env.DB.prepare("UPDATE auth_challenges SET attempts=?,status=? WHERE id=?")
+    await env.DB.prepare("UPDATE auth_challenges SET attempts=?,status=? WHERE id=? AND status='otp_sent'")
       .bind(attempts, attempts >= MAX_OTP_ATTEMPTS ? "locked" : "otp_sent", challengeId).run();
     return json({ error: "INVALID_CODE", attemptsRemaining: Math.max(0, MAX_OTP_ATTEMPTS - attempts) }, 401);
   }
+
+  // Atomically consume the challenge before creating a session so concurrent requests cannot reuse one OTP.
+  const consumed = await env.DB.prepare(
+    "UPDATE auth_challenges SET status='verified',verified_at=? WHERE id=? AND status='otp_sent' AND expires_at>?"
+  ).bind(timestamp, challengeId, timestamp).run();
+  if (Number(consumed?.meta?.changes || 0) !== 1) return json({ error: "CHALLENGE_ALREADY_USED" }, 409);
 
   let userId;
   if (challenge.action === "register") {
@@ -231,7 +237,6 @@ async function verifyOtp(request, env) {
   await env.DB.prepare(
     "INSERT INTO auth_sessions (id,user_id,token_hash,created_at,last_seen_at,expires_at) VALUES (?,?,?,?,?,?)"
   ).bind(sessionId, userId, await sha256(sessionToken), timestamp, timestamp, timestamp + SESSION_TTL_SECONDS).run();
-  await env.DB.prepare("UPDATE auth_challenges SET status='verified',verified_at=? WHERE id=?").bind(timestamp, challengeId).run();
   const user = await env.DB.prepare("SELECT id,telegram_username,display_name,role FROM users WHERE id=?").bind(userId).first();
   return json({ authenticated: true, user, sessionExpiresInSeconds: SESSION_TTL_SECONDS }, 200, {
     "set-cookie": cookieHeader(sessionToken, SESSION_TTL_SECONDS)
