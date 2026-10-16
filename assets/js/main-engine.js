@@ -348,6 +348,52 @@
     });
   }
 
+  function ensureAuthEngine() {
+    if (manager.getEngine('auth-otp-engine')) return;
+    manager.register({
+      id: 'auth-otp-engine',
+      name: 'Authentication & OTP Bot Engine',
+      version: VERSION,
+      contractVersion: VERSION,
+      description: 'Coordinates Telegram OTP login, registration, session restoration and logout through a server-side authentication API; it never stores bot credentials in the browser.',
+      dependencies: [
+        { id: 'bot-engine', version: '^1.0.0' },
+        { id: 'security-engine', version: '^1.0.0' }
+      ],
+      capabilities: ['OTP login', 'OTP registration', 'server-managed sessions', 'logout and session revocation', 'authentication service health'],
+      provides: ['auth.otp-verification', 'auth.registration', 'auth.session', 'auth.logout'],
+      publishes: ['auth.session_checked', 'auth.backend_unavailable'],
+      subscribes: [],
+      lifecycle: {
+        validate: () => Boolean(window.TBMCAuthEngine &&
+          typeof window.TBMCAuthEngine.status === 'function' &&
+          typeof window.TBMCAuthEngine.getSession === 'function' &&
+          typeof window.TBMCAuthEngine.health === 'function'),
+        init: async () => {},
+        start: async () => {
+          const status = window.TBMCAuthEngine.status();
+          if (!status.configured) core.publish('auth.backend_unavailable', { code: 'AUTH_BACKEND_NOT_CONFIGURED' });
+        },
+        healthCheck: async () => {
+          const status = window.TBMCAuthEngine.status();
+          if (!status.configured) {
+            return { status: 'degraded', detail: 'Authentication pages and module contracts are loaded, but secure OTP backend URL is not configured; real login is disabled.' };
+          }
+          try {
+            const result = await window.TBMCAuthEngine.health();
+            return result.ready
+              ? { status: 'healthy', detail: 'D1 database, Telegram OTP token and webhook health checks passed' }
+              : { status: 'degraded', detail: 'Authentication API is reachable but one or more backend health checks failed' };
+          } catch (_) {
+            return { status: 'degraded', detail: 'Authentication API health could not be confirmed; login must not be treated as live' };
+          }
+        },
+        stop: async () => {},
+        destroy: async () => {}
+      }
+    });
+  }
+
   async function bootstrap() {
     if (state.status === 'ready' || state.status === 'degraded') return runtimeInfo();
     if (state.bootstrapPromise) return state.bootstrapPromise;
@@ -368,15 +414,17 @@
       ensureAdminEngine();
       ensureSystemEngine();
       ensureBotEngine();
+      ensureAuthEngine();
       await manager.start('catalog-engine');
       await manager.start('history-engine');
       await manager.start('analytics-engine');
       await manager.start('admin-engine');
       await manager.start('system-engine');
       await manager.start('bot-engine');
+      await manager.start('auth-otp-engine');
       const storage = manager.getEngine('storage-engine');
       const catalog = manager.getEngine('catalog-engine');
-      const requiredIds = ['storage-engine', 'search-engine', 'catalog-engine', 'history-engine', 'analytics-engine', 'logging-engine', 'security-engine', 'admin-engine', 'system-engine', 'bot-engine'];
+      const requiredIds = ['storage-engine', 'search-engine', 'catalog-engine', 'history-engine', 'analytics-engine', 'logging-engine', 'security-engine', 'admin-engine', 'system-engine', 'bot-engine', 'auth-otp-engine'];
       const required = requiredIds.map(id => manager.getEngine(id));
       const unhealthy = required.filter(engine => !engine || !['active', 'degraded'].includes(engine.state) || !['healthy', 'degraded'].includes(engine.health.status));
       if (!storage || !catalog || unhealthy.length) {
@@ -413,7 +461,7 @@
     core.publish('runtime.shutdown_started', { version: VERSION });
     state.shutdownPromise = (async () => {
       const failures = [];
-      for (const id of ['bot-engine', 'system-engine', 'admin-engine', 'history-engine', 'catalog-engine', 'search-engine', 'analytics-engine', 'security-engine', 'logging-engine', 'storage-engine']) {
+      for (const id of ['auth-otp-engine', 'bot-engine', 'system-engine', 'admin-engine', 'history-engine', 'catalog-engine', 'search-engine', 'analytics-engine', 'security-engine', 'logging-engine', 'storage-engine']) {
         const engine = manager.getEngine(id);
         if (!engine || !['active', 'degraded', 'failed', 'initialized', 'starting', 'blocked'].includes(engine.state)) continue;
         try { await manager.stop(id); }
