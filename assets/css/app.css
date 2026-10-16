@@ -8,7 +8,7 @@
 /* Unified bottom navigation module — shared across every platform page */
 body{padding-bottom:calc(94px + env(safe-area-inset-bottom))}
 .tbmc-bottom-navigation{position:fixed;right:18px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:1000;font-family:inherit;color:var(--text);isolation:isolate}
-.tbmc-bottom-toggle{display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 17px;border:1px solid #5266d8;border-radius:14px;background:linear-gradient(135deg,#687cf2,#465bd0);color:#fff;box-shadow:0 12px 34px #0005;font:600 13px/1.2 inherit;cursor:pointer}
+.tbmc-bottom-toggle{display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 17px;border:1px solid #5266d8;border-radius:14px;background:linear-gradient(135deg,#687cf2,#465bd0);color:#fff;box-shadow:0 12px 34px #0005;font:inherit;font-size:13px;font-weight:600;line-height:1.2;cursor:pointer}
 .tbmc-bottom-toggle:focus-visible,.tbmc-bottom-navigation a:focus-visible,.tbmc-system-toggle:focus-visible{outline:3px solid #9eb0ff;outline-offset:3px}
 .tbmc-bottom-toggle-icon{font-size:18px}.tbmc-bottom-chevron{font-size:16px;transition:transform .18s}
 .tbmc-bottom-toggle[aria-expanded=true] .tbmc-bottom-chevron{transform:rotate(180deg)}
