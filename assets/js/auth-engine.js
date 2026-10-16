@@ -63,6 +63,7 @@
   function humanError(error) {
     const messages = {
       AUTH_BACKEND_NOT_CONFIGURED: 'Authentication is not live yet: the secure OTP backend URL has not been configured.',
+      AUTH_SERVICE_NOT_CONFIGURED: 'The secure authentication backend is missing required configuration. Contact the project administrator.',
       AUTH_SERVICE_UNREACHABLE: 'Could not reach the authentication service. Check the connection or try again later.',
       INVALID_TELEGRAM_USERNAME: 'Enter a valid Telegram username (5–32 letters, numbers or underscores).',
       DISPLAY_NAME_REQUIRED: 'Enter a display name with at least two characters.',
@@ -195,6 +196,7 @@
     version: '1.0.0',
     status: () => ({ configured: Boolean(apiBase), challengeActive: Boolean(currentChallenge) }),
     getSession: () => request('/api/auth/me'),
+    health: () => request('/api/auth/health'),
     logout
   });
 })();
