@@ -424,7 +424,7 @@
       await manager.start('auth-otp-engine');
       const storage = manager.getEngine('storage-engine');
       const catalog = manager.getEngine('catalog-engine');
-      const requiredIds = ['storage-engine', 'search-engine', 'catalog-engine', 'history-engine', 'analytics-engine', 'logging-engine', 'security-engine', 'admin-engine', 'system-engine', 'bot-engine', 'auth-otp-engine'];
+      const requiredIds = ['storage-engine', 'search-engine', 'catalog-engine', 'history-engine', 'analytics-engine', 'logging-engine', 'security-engine', 'admin-engine', 'system-engine', 'bot-engine'];
       const required = requiredIds.map(id => manager.getEngine(id));
       const unhealthy = required.filter(engine => !engine || !['active', 'degraded'].includes(engine.state) || !['healthy', 'degraded'].includes(engine.health.status));
       if (!storage || !catalog || unhealthy.length) {
