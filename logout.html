@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; base-uri 'self'; form-action 'self'; object-src 'none'">
+<title>Logout · Telegram Bot Master Catalog</title>
+<link rel="stylesheet" href="./assets/css/auth.css">
+<script src="./assets/js/auth-config.js" defer></script>
+<script src="./assets/js/auth-engine.js" defer></script>
+</head>
+<body>
+<main class="auth-shell">
+  <a class="auth-back" href="./index.html">← Back to catalog</a>
+  <div class="auth-brand"><div class="auth-mark">TB</div><div><strong>Telegram Bot Master Catalog</strong><small>Account session</small></div></div>
+  <section class="auth-card">
+    <div class="auth-eyebrow">Account security</div>
+    <h1>Sign out</h1>
+    <p class="auth-lead">This revokes the current server-side session and clears its secure browser cookie. Signing out does not delete your account.</p>
+    <div class="auth-user"><strong>End this session?</strong><span>You can sign in again with a new Telegram OTP whenever you need to.</span></div>
+    <button class="auth-button" type="button" data-auth-logout>Sign out securely</button>
+    <p class="auth-status" data-auth-status role="status" aria-live="polite" hidden></p>
+    <div class="auth-links"><a href="./login.html">Back to login</a><a href="./index.html">Return to catalog</a></div>
+  </section>
+  <p class="auth-footer">Authentication Engine v1.0</p>
+</main>
+</body></html>
