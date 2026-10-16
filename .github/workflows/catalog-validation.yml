@@ -37,6 +37,7 @@ jobs:
           node --check assets/js/admin-engine.js
           node --check assets/js/system-engine.js
           node --check assets/js/bot-engine.js
+          node --check assets/js/engine-manager-page.js
           node --check assets/js/bot-modules/catalog-query.js
           node --check scripts/telegram/send-smoke-message.mjs
           node --check assets/js/main-engine.js
