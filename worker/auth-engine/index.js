@@ -237,6 +237,22 @@ async function verifyOtp(request, env) {
     "set-cookie": cookieHeader(sessionToken, SESSION_TTL_SECONDS)
   });
 }
+async function health(env) {
+  const checks = { database: false, telegramToken: Boolean(env.TELEGRAM_OTP_BOT_TOKEN), webhookConfigured: false, secretsConfigured: Boolean(env.TELEGRAM_WEBHOOK_SECRET && env.OTP_PEPPER && env.TELEGRAM_OTP_BOT_USERNAME) };
+  try {
+    await env.DB.prepare("SELECT 1 AS ok").first();
+    checks.database = true;
+  } catch (_) {}
+  if (checks.telegramToken) {
+    try {
+      const info = await telegram(env, "getWebhookInfo", {});
+      const expectedSuffix = "/api/telegram/webhook";
+      checks.webhookConfigured = typeof info.url === "string" && info.url.endsWith(expectedSuffix) && !info.last_error_message;
+    } catch (_) {}
+  }
+  const ready = Object.values(checks).every(Boolean);
+  return json({ ready, checks, checkedAt: new Date().toISOString() }, ready ? 200 : 503);
+}
 async function me(request, env) {
   const session = await currentSession(request, env, true);
   if (!session) return json({ authenticated: false }, 401);
@@ -269,7 +285,8 @@ export default {
         return await telegramWebhook(request, env);
       }
       let response;
-      if (url.pathname.startsWith("/api/auth/") &&
+      if (url.pathname === "/api/auth/health" && request.method === "GET") response = await health(env);
+      else if (url.pathname.startsWith("/api/auth/") &&
           (!env.DB || !env.TELEGRAM_OTP_BOT_TOKEN || !env.TELEGRAM_OTP_BOT_USERNAME || !env.TELEGRAM_WEBHOOK_SECRET || !env.OTP_PEPPER)) {
         response = json({ error: "AUTH_SERVICE_NOT_CONFIGURED", message: "The secure authentication service is not fully configured." }, 503);
       } else if (url.pathname === "/api/auth/start" && request.method === "POST") response = await startChallenge(request, env);
