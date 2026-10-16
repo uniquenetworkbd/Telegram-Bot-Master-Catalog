@@ -64,10 +64,12 @@ if (offset === null) {
 } else {
   let nextOffset = offset;
   let responsesSent = 0;
+  const maxRepliesPerRun = 10;
   for (const update of updates) {
     if (!Number.isSafeInteger(update.update_id)) continue;
     const response = await handleCatalogQuery(update, records);
     if (response) {
+      if (responsesSent >= maxRepliesPerRun) break;
       await telegram('sendMessage', response);
       responsesSent += 1;
     }
