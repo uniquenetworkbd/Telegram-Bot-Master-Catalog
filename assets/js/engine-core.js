@@ -265,6 +265,46 @@
     return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   }
 
+  const eventIdPattern = /^[a-z][a-z0-9.-]{1,63}$/;
+  const eventVersionPattern = /^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$/;
+  const knownRoutes = new Set(['home', 'dashboard', 'catalog', 'bot', 'profile', 'system']);
+  const validObject = payload => Boolean(payload && typeof payload === 'object' && !Array.isArray(payload));
+  const validId = value => typeof value === 'string' && eventIdPattern.test(value);
+  const validString = value => typeof value === 'string' && value.trim().length > 0;
+  const validRoute = value => typeof value === 'string' && knownRoutes.has(value);
+
+  function registerBuiltInEventSchemas() {
+    const schema = (type, publisher, privacy, consumers, validate) =>
+      registerEventSchema(type, { version: 1, publisher, privacy, consumers, validate });
+
+    schema('engine.registered', 'runtime', 'internal', ['system', 'logging'],
+      payload => validObject(payload) && validId(payload.id) && validString(payload.version) && eventVersionPattern.test(payload.version));
+    schema('engine.state_changed', 'module-manager', 'internal', ['system', 'logging'],
+      payload => validObject(payload) && validId(payload.id) && validString(payload.state) && validString(payload.health));
+    schema('engine.start_failed', 'module-manager', 'internal', ['system', 'logging'],
+      payload => validObject(payload) && validId(payload.id) && validString(payload.code));
+    schema('engine.stop_failed', 'module-manager', 'internal', ['system', 'logging'],
+      payload => validObject(payload) && validId(payload.id) && validString(payload.code));
+    schema('engine.enabled', 'module-manager', 'internal', ['system', 'logging'],
+      payload => validObject(payload) && validId(payload.id));
+    schema('engine.disabled', 'module-manager', 'internal', ['system', 'logging'],
+      payload => validObject(payload) && validId(payload.id));
+    schema('engine.unregistered', 'module-manager', 'internal', ['system', 'logging'],
+      payload => validObject(payload) && validId(payload.id));
+    schema('activity.recorded', 'local-activity', 'usage', ['history', 'analytics'],
+      payload => validObject(payload) && ['page_view', 'catalog_search_used', 'bot_details_opened'].includes(payload.type) && validString(payload.route));
+    schema('diagnostics.preference_changed', 'system-ui', 'configuration', ['system', 'logging'],
+      payload => validObject(payload) && typeof payload.enabled === 'boolean');
+    schema('activity.cleared', 'system-ui', 'internal', ['history', 'system'],
+      payload => validObject(payload));
+    schema('navigation.changed', 'navigation-adapter', 'usage', ['history'],
+      payload => validObject(payload) && validRoute(payload.route));
+    schema('catalog.search_used', 'catalog-ui', 'usage', ['analytics'],
+      payload => validObject(payload) && typeof payload.hasQuery === 'boolean');
+  }
+
+  registerBuiltInEventSchemas();
+
   register({
     id: 'main-engine',
     name: 'Main Engine',
