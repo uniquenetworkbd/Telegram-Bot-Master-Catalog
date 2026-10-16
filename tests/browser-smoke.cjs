@@ -383,6 +383,8 @@ async function main() {
         systemHealth: manager.getEngine('system-engine')?.health.status,
         botState: manager.getEngine('bot-engine')?.state,
         botHealth: manager.getEngine('bot-engine')?.health.status,
+        authState: manager.getEngine('auth-otp-engine')?.state,
+        authHealth: manager.getEngine('auth-otp-engine')?.health.status,
         botModuleCount: window.TBMC.botEngine.listModules().length,
         botStatus: window.TBMC.botEngine.getStatus(),
         loggingStatus: window.TBMC.loggingEngine.getStatus(),
