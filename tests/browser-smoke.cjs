@@ -434,11 +434,11 @@ async function main() {
     assert.equal(mainEngineContract.adminCapabilities.authenticationConfigured, false);
     assert.equal(mainEngineContract.adminCapabilities.serverAuthorizationEnforced, false);
     assert.equal(mainEngineContract.systemSnapshot.runtimeState, 'ready');
-    assert.equal(mainEngineContract.systemSnapshot.engineCount, 10);
+    assert.equal(mainEngineContract.systemSnapshot.engineCount, 11);
     assert.equal(mainEngineContract.loadPromiseCached, true, 'Storage and Catalog must share the validated dataset load');
     assert.equal(mainEngineContract.runtimeReadySchema, true);
     assert.equal(mainEngineContract.catalogLoadedSchema, true);
-    assert.equal(mainEngineContract.engineCount, 10);
+    assert.equal(mainEngineContract.engineCount, 11);
 
     const botModuleContract = await page.evaluate(async () => {
       const bot = window.TBMC.botEngine;
