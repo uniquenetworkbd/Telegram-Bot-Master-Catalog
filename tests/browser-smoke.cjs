@@ -30,7 +30,7 @@ async function main() {
 
     const started = Date.now();
     await page.goto(BASE + '/index.html', { waitUntil: 'networkidle' });
-    await page.waitForFunction(() => document.querySelector('#csvBadge')?.textContent === 'Loaded', { timeout: 10000 });
+    await page.waitForFunction(() => document.querySelector('#homeTotal')?.textContent === '1,000', null, { timeout: 10000 });
     const initialLoadMs = Date.now() - started;
     assert.equal(await page.locator('#homeTotal').textContent(), '1,000');
     assert.equal(await page.locator('#homeCats').textContent(), '100');
@@ -81,7 +81,7 @@ async function main() {
 
     await page.locator('#moreNavBtn').click();
     await page.locator('#moreMenu a[data-route="system"]').click();
-    assert.equal(await page.locator('#systemRecords').textContent(), '1,000');
+    assert.match(await page.locator('#page-system').innerText(), /System configuration[\s\S]*Logs & Audit[\s\S]*Version Logs[\s\S]*Live information/i);
     assert.ok(await page.evaluate(() => Boolean(window.TBMC && window.TBMC.engineCore)), 'Main Engine runtime should be exposed');
     const engineIds = await page.evaluate(() => window.TBMC.engineCore.listEngines().map(engine => engine.id));
     for (const requiredEngine of ['main-engine', 'engine-registry', 'catalog-data', 'catalog-ui', 'local-activity']) {
@@ -96,14 +96,29 @@ async function main() {
     assert.ok(localActivity.every(event => !('query' in event) && !('botId' in event) && !('ip' in event)), 'Local activity must not store search terms, bot IDs or IP addresses');
     await page.locator('#tbmc-diagnostics-toggle').uncheck();
     assert.equal(await page.evaluate(() => sessionStorage.getItem('tbmc-local-activity-v1')), null, 'Opt-out should clear local session activity');
-    assert.equal(await page.locator('#systemCategories').textContent(), '100');
-    assert.notEqual(await page.locator('#csvBadge').textContent(), 'Failed');
-    assert.notEqual(await page.locator('#runtimeOverall').textContent(), 'Attention');
+    assert.match(await page.locator('#page-system').innerText(), /Backend server: not used/i);
     assert.match(await page.locator('body').innerText(), /Admin authentication[\s\S]*Not implemented/i);
     assert.match(await page.locator('body').innerText(), /Backend server[\s\S]*Not used/i);
     assert.doesNotMatch(await page.locator('body').innerText(), /Data unavailable/i, 'Healthy system must not report unavailable data');
-    await page.locator('#themeSelect').selectOption('light');
-    assert.equal(await page.locator('html').getAttribute('data-theme'), 'light');
+    const configPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    configPage.on('pageerror', error => pageErrors.push('System configuration: ' + error.message));
+    await configPage.goto(BASE + '/pages/system-configuration.html', { waitUntil: 'networkidle' });
+    assert.match(await configPage.locator('h1').textContent(), /System configuration/i);
+    await configPage.locator('#themeSelect').selectOption('light');
+    await configPage.locator('#saveSettings').click();
+    assert.equal(await configPage.locator('html').getAttribute('data-theme'), 'light');
+    await configPage.locator('#resetSettings').click();
+    await configPage.close();
+    for (const [path, heading] of [['pages/version-logs.html','Version Logs'],['pages/live-information.html','Live information']]) {
+      const modulePage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      modulePage.on('pageerror', error => pageErrors.push(path + ': ' + error.message));
+      await modulePage.goto(BASE + '/' + path, { waitUntil: 'networkidle' });
+      assert.match(await modulePage.locator('h1').textContent(), new RegExp(heading, 'i'));
+      assert.equal(await modulePage.locator('.system-subnav a').count(), 4);
+      if (path.includes('version-logs')) assert.match(await modulePage.locator('body').innerText(), /BASELINE SNAPSHOT[\s\S]*System & Theme/i);
+      if (path.includes('live-information')) assert.match(await modulePage.locator('body').innerText(), /Global visitor count[\s\S]*Unavailable/i);
+      await modulePage.close();
+    }
 
     await page.evaluate(() => { window.location.hash = '#bot/DOES-NOT-EXIST'; });
     await page.waitForFunction(() => document.querySelector('#page-bot')?.classList.contains('active'));
@@ -116,7 +131,7 @@ async function main() {
     const desktop = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     desktop.on('pageerror', error => pageErrors.push(error.message));
     await desktop.goto(BASE + '/index.html', { waitUntil: 'networkidle' });
-    await desktop.waitForFunction(() => document.querySelector('#csvBadge')?.textContent === 'Loaded', { timeout: 10000 });
+    await desktop.waitForFunction(() => document.querySelector('#homeTotal')?.textContent === '1,000', null, { timeout: 10000 });
     const desktopWidths = await desktop.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
     assert.ok(desktopWidths.doc <= desktopWidths.inner + 4 && desktopWidths.body <= desktopWidths.inner + 4,
       `Desktop horizontal overflow: ${JSON.stringify(desktopWidths)}`);
@@ -128,9 +143,9 @@ async function main() {
       body: 'index,Bot ID,Category No,Category,English Category,Bot Name,What it does,Free/Low-cost Technology,API Required?,Automation Potential,Monetization Potential,Suggested MVP,Notes\n0,B001-01,1,Test,Test,Test Bot,Description,Free,No,Low,No,Test,Test\n'
     }));
     await badPage.goto(BASE + '/index.html', { waitUntil: 'networkidle' });
-    await badPage.waitForFunction(() => document.querySelector('#csvBadge')?.textContent === 'Failed');
+    await badPage.waitForFunction(() => /Data unavailable/i.test(document.querySelector('#dataStatus')?.textContent || ''), null, { timeout: 10000 });
     assert.match(await badPage.locator('#dataStatus').textContent(), /Data unavailable/i);
-    assert.notEqual(await badPage.locator('#runtimeOverall').textContent(), 'Healthy');
+    assert.match(await badPage.locator('#dataStatus').textContent(), /Data unavailable/i);
     assert.deepEqual(pageErrors, [], 'Uncaught browser errors detected');
     assert.deepEqual(failedLocalResponses, [], 'Unexpected local HTTP errors detected');
 
@@ -146,7 +161,7 @@ async function main() {
           if (response.url().startsWith(BASE) && response.status() >= 400) crossHttpErrors.push(`${response.status()} ${response.url()}`);
         });
         await crossPage.goto(BASE + '/index.html', { waitUntil: 'networkidle' });
-        await crossPage.waitForFunction(() => document.querySelector('#csvBadge')?.textContent === 'Loaded', null, { timeout: 10000 });
+        await crossPage.waitForFunction(() => document.querySelector('#homeTotal')?.textContent === '1,000', null, { timeout: 10000 });
         assert.equal(await crossPage.locator('#homeTotal').textContent(), '1,000', engineName + ': loaded record count');
         assert.equal(await crossPage.locator('#homeCats').textContent(), '100', engineName + ': category count');
         await crossPage.locator('#page-home [data-go="catalog"]').first().click();
