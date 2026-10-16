@@ -334,6 +334,7 @@ The repository previously had a 44-tracked-file mapping. This table identifies t
 | P0 | `assets/js/history-engine.js` | History Engine | Own URL hash parsing, safe bot-detail encoding and browser history pushState adapter |
 | P0 | `assets/js/module-manager.js` | Module Manager | Managed registry, dependency graph, lifecycle, health and cleanup |
 | P0 | `assets/js/search-engine.js` | Search Engine | Full-text matching, category/API/automation filters, sorting and facets |
+| P0 | `assets/js/analytics-engine.js` | Analytics Engine | Aggregate record/category/API/automation metrics without persisting query text |
 | P0 | `assets/js/main-engine.js` | Main Engine | Idempotent bootstrap/readiness, Storage/History/Search/Catalog startup, runtime status and managed-engine shutdown |
 | P0 | `index.html` | Runtime bootstrap / Presentation | Load order: repository → app shell → Engine Core → History Engine → Module Manager → Search Engine → Catalog feature → Main Engine → shared navigation |
 | P0 | `assets/js/catalog-repository.js` | Storage Engine | Preserve public methods and CSV validation |
@@ -564,8 +565,9 @@ The migration is complete only when all conditions are evidenced:
 - [x] Built-in Event Bus schemas for current runtime events merged in PR #21; valid/invalid payload checks passed in the PR browser regression.
 - [x] Main Engine bootstrap merged in PR #22: idempotent readiness/shutdown API, managed Storage and Catalog startup, cached data loading, runtime event schemas and browser acceptance tests passed in CI.
 - [x] Search Engine merged in PR #23: filtering, sorting and category facets extracted; behavior-preservation tests passed in Chromium, Firefox and WebKit.
-- [x] History Engine extraction started in branch `history-runtime-v1`: app-shell delegates hash parsing and `pushState` to a separate adapter; Main Engine manages its lifecycle and regression tests cover encoding/fallback behavior.
-- [ ] History Engine regression and full CI passed on the current branch.
+- [x] History Engine merged in PR #25: app-shell delegates hash parsing and `pushState` to a separate adapter; Main Engine manages its lifecycle and browser tests cover encoding/fallback behavior.
+- [x] Analytics Engine extraction started in branch `analytics-engine-extraction-v1`: aggregate metrics moved behind a separate API; Catalog UI delegates metric and chart data to it.
+- [ ] Analytics behavior-preservation tests and full CI passed on the current branch.
 - [x] Catalog data/static validation passed in workflow run [38851503758](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38851503758).
 - [x] Browser regression passed in the same run: Chromium, Firefox and WebKit; 1,000 records / 100 categories; search/filter/details/history/pagination/export/theme/System/XSS checks; mobile 390px and desktop 1440px; zero uncaught page errors and local HTTP errors.
 - [x] Platform audit passed in workflow run [38851503827](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38851503827) after correcting stale checks for absent, unapproved pages.
@@ -573,4 +575,4 @@ The migration is complete only when all conditions are evidenced:
 
 **Current state:** PRs #19, #20, #21, #22 and #23 have been merged. Main Engine now starts managed Storage, Search and Catalog Engines in dependency order. Search filtering, sorting and category facets are extracted behind `assets/js/search-engine.js`; browser regression passed on PR #23. Live GitHub Pages deployment is not claimed until the deployed assets can be independently verified.
 
-**Next action:** validate History Engine extraction in PR #25, then migrate Analytics, Logging, Security, Admin and System behaviors into managed Engine boundaries one at a time, with tests in each change. Complete the remaining tracked-file inventory before broad feature extraction. No additional contract/architecture documents are to be created; update this master plan only when a decision genuinely changes.
+**Next action:** validate Analytics Engine extraction in PR #26, then migrate Logging, Security, Admin and System behaviors into managed Engine boundaries one at a time, with tests in each change. Complete the remaining tracked-file inventory before broad feature extraction. No additional contract/architecture documents are to be created; update this master plan only when a decision genuinely changes.
