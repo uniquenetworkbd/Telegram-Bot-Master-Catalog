@@ -5,6 +5,7 @@
   const entries = [];
   const MAX_ENTRIES = 100;
   let listening = false;
+  let unsubscribe = null;
 
   function record(event) {
     if (!event || typeof event.type !== 'string') return;
@@ -22,6 +23,17 @@
     version: '1.0.0',
     listRecent: (limit = 25) => entries.slice(-Math.max(0, Math.min(100, Number(limit) || 25))).map(entry => ({ ...entry })),
     clear: () => { entries.length = 0; },
+    start: context => {
+      if (listening) return;
+      if (!context || typeof context.subscribe !== 'function') throw new TypeError('Logging Engine requires a managed subscription context');
+      unsubscribe = context.subscribe('*', record);
+      listening = true;
+    },
+    stop: () => {
+      if (unsubscribe) unsubscribe();
+      unsubscribe = null;
+      listening = false;
+    },
     getStatus: () => ({ listening, entryCount: entries.length, capacity: MAX_ENTRIES, persistence: 'memory-only' })
   });
 })();
