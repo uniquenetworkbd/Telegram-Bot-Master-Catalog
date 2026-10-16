@@ -89,6 +89,36 @@
     return error;
   }
 
+  function ensureSearchEngine() {
+    if (manager.getEngine('search-engine')) return;
+    manager.register({
+      id: 'search-engine',
+      name: 'Search Engine',
+      version: VERSION,
+      contractVersion: VERSION,
+      description: 'Owns full-text matching, category/API/automation filters, sorting and search facets.',
+      dependencies: [{ id: 'storage-engine', version: '^1.0.0' }],
+      capabilities: ['full-text search', 'category filter', 'API filter', 'automation filter', 'sorting', 'facets'],
+      provides: ['catalog.search', 'catalog.search-facets'],
+      publishes: [],
+      subscribes: [],
+      lifecycle: {
+        validate: () => Boolean(window.TBMC.searchEngine &&
+          typeof window.TBMC.searchEngine.filter === 'function' &&
+          typeof window.TBMC.searchEngine.getFacets === 'function'),
+        init: async () => {},
+        start: async () => {},
+        healthCheck: async () => Boolean(window.TBMC.searchEngine &&
+          typeof window.TBMC.searchEngine.filter === 'function' &&
+          typeof window.TBMC.searchEngine.getFacets === 'function')
+          ? { status: 'healthy', detail: 'Search and filter operations are available' }
+          : { status: 'unhealthy', detail: 'Search Engine API is unavailable' },
+        stop: async () => {},
+        destroy: async () => {}
+      }
+    });
+  }
+
   function ensureCatalogEngine() {
     if (manager.getEngine('catalog-engine')) return;
     manager.register({
@@ -97,13 +127,14 @@
       version: VERSION,
       contractVersion: VERSION,
       description: 'Adapts the existing Catalog feature to the managed runtime lifecycle.',
-      dependencies: [{ id: 'storage-engine', version: '^1.0.0' }],
+      dependencies: [{ id: 'storage-engine', version: '^1.0.0' }, { id: 'search-engine', version: '^1.0.0' }],
       capabilities: ['catalog route', 'record details', 'catalog metrics'],
       provides: ['catalog.ui', 'catalog.details'],
       publishes: [],
       subscribes: [],
       lifecycle: {
         validate: () => Boolean(window.TBMC.catalog && typeof window.TBMC.catalog.runtime === 'function' &&
+          window.TBMC.searchEngine && typeof window.TBMC.searchEngine.filter === 'function' &&
           window.TBMC.appShell && typeof window.TBMC.appShell.go === 'function'),
         init: async () => {},
         start: async () => {
@@ -131,6 +162,7 @@
 
     state.bootstrapPromise = (async () => {
       ensureStorageEngine();
+      ensureSearchEngine();
       ensureCatalogEngine();
       await manager.start('catalog-engine');
       const storage = manager.getEngine('storage-engine');
