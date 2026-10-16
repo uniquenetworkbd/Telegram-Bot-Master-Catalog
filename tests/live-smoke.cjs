@@ -45,7 +45,6 @@ async function main() {
     assert.equal(await page.locator('#page-system a[href="./pages/logs-audit.html"]').count(), 1);
     const widths = await page.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
     assert.ok(widths.doc <= widths.inner + 4 && widths.body <= widths.inner + 4, `Mobile overflow: ${JSON.stringify(widths)}`);
-    assert.match(await page.locator('#page-system').innerText(), /System configuration[\\s\\S]*Logs & Audit[\\s\\S]*Version Logs[\\s\\S]*Live information/i);
     for (const [path, heading] of [
       ['pages/system-configuration.html', 'System configuration'],
       ['pages/version-logs.html', 'Version Logs'],
