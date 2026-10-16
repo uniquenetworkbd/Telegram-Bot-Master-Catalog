@@ -38,11 +38,17 @@ async function main() {
     await page.waitForFunction(() => location.hash === '#bot/B001-01');
     assert.match(await page.locator('#botDetail').innerText(), /not a verified live Telegram bot/i);
 
+    assert.equal(await page.locator('#page-system').count(), 0, 'System must be a navigation group, not a separate hub page');
+    assert.equal(await page.locator('#systemMenuToggle').count(), 1, 'Primary navigation is missing the System parent item');
+    assert.equal(await page.locator('#systemSubmenu a').count(), 4, 'System submenu must be nested directly under System in the primary navigation');
+    assert.deepEqual(await page.locator('#systemSubmenu a').allTextContents(), ['System configuration', 'Logs & Audit', 'Version Logs', 'Live information']);
+    await page.locator('#systemMenuToggle').click();
+    assert.equal(await page.locator('#systemMenuToggle').getAttribute('aria-expanded'), 'false');
+    assert.equal(await page.locator('#systemSubmenu').isVisible(), false);
+    await page.locator('#systemMenuToggle').click();
+    assert.equal(await page.locator('#systemSubmenu').isVisible(), true);
     await page.locator('#moreNavBtn').click();
-    await page.locator('#moreMenu a[data-route="system"]').click();
-    assert.match(await page.locator('#page-system').innerText(), /System configuration[\s\S]*Logs & Audit[\s\S]*Version Logs[\s\S]*Live information/i);
-    assert.match(await page.locator('#page-system').innerText(), /Admin authentication is not implemented/i);
-    assert.equal(await page.locator('#page-system a[href="./pages/logs-audit.html"]').count(), 1);
+    assert.equal(await page.locator('#moreMenu .mobile-system-group a').count(), 4, 'Mobile More menu must expose the same four System submenu links');
     const widths = await page.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
     assert.ok(widths.doc <= widths.inner + 4 && widths.body <= widths.inner + 4, `Mobile overflow: ${JSON.stringify(widths)}`);
     for (const [path, heading] of [
@@ -100,7 +106,7 @@ async function main() {
 
     console.log('LIVE DEPLOYMENT BROWSER SMOKE: PASS');
     console.log(`URL: ${page.url()} | loaded records: 1000 | categories: 100`);
-    console.log('Concept disclosure, search, details, System, admin boundary, responsive width: PASS');
+    console.log('Concept disclosure, search, details, nested System navigation, responsive width: PASS');
     console.log(`Mobile widths: ${JSON.stringify(widths)} | uncaught JS errors: 0 | HTTP errors: 0`);
   } finally {
     await browser.close();
