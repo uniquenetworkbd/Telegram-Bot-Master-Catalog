@@ -125,10 +125,10 @@ class SecurityParser(HTMLParser):
             self.scripts.append(attrs.get("src", ""))
         self.inline_handlers.extend(k for k in attrs if k.lower().startswith("on"))
 p = SecurityParser(); p.feed(HTML.read_text(encoding="utf-8")); p.close()
-require(p.scripts == ["./assets/js/catalog-repository.js", "./assets/js/app-shell.js", "./assets/js/engine-core.js", "./assets/js/history-engine.js", "./assets/js/module-manager.js", "./assets/js/search-engine.js", "./assets/js/analytics-engine.js", "./assets/js/logging-engine.js", "./assets/js/security-engine.js", "./assets/js/admin-engine.js", "./assets/js/system-engine.js", "./assets/js/bot-engine.js", "./assets/js/bot-modules/catalog-query.js", "./assets/js/catalog-feature.js", "./assets/js/main-engine.js", "./assets/js/global-bottom-nav.js"],
+require(p.scripts == ["./assets/js/catalog-repository.js", "./assets/js/app-shell.js", "./assets/js/engine-core.js", "./assets/js/history-engine.js", "./assets/js/module-manager.js", "./assets/js/search-engine.js", "./assets/js/analytics-engine.js", "./assets/js/logging-engine.js", "./assets/js/security-engine.js", "./assets/js/admin-engine.js", "./assets/js/system-engine.js", "./assets/js/bot-engine.js", "./assets/js/bot-modules/catalog-query.js", "./assets/js/catalog-feature.js", "./assets/js/auth-config.js", "./assets/js/auth-engine.js", "./assets/js/main-engine.js", "./assets/js/global-bottom-nav.js"],
         f"Unexpected script sources: {p.scripts}")
 require(not p.inline_handlers, f"Inline event handlers are disallowed: {p.inline_handlers}")
-for source_path in [ROOT / "assets/js/catalog-repository.js", ROOT / "assets/js/app-shell.js", ROOT / "assets/js/catalog-feature.js", ROOT / "assets/js/bot-engine.js", ROOT / "assets/js/bot-modules/catalog-query.js", ROOT / "assets/js/engine-manager-page.js", ROOT / "scripts/telegram/send-smoke-message.mjs", ROOT / "scripts/telegram/poll-updates.mjs", ROOT / "scripts/telegram/csv.mjs", ROOT / "scripts/telegram/bot-modules/catalog-query.mjs"]:
+for source_path in [ROOT / "assets/js/catalog-repository.js", ROOT / "assets/js/app-shell.js", ROOT / "assets/js/catalog-feature.js", ROOT / "assets/js/bot-engine.js", ROOT / "assets/js/bot-modules/catalog-query.js", ROOT / "assets/js/engine-manager-page.js", ROOT / "assets/js/auth-engine.js", ROOT / "worker/auth-engine/index.js", ROOT / "scripts/telegram/send-smoke-message.mjs", ROOT / "scripts/telegram/poll-updates.mjs", ROOT / "scripts/telegram/csv.mjs", ROOT / "scripts/telegram/bot-modules/catalog-query.mjs"]:
     source = source_path.read_text(encoding="utf-8")
     require(re.search(r"\beval\s*\(", source) is None, f"eval() found in {source_path}")
     require(re.search(r"\bnew\s+Function\b", source) is None, f"Function constructor found in {source_path}")
@@ -136,4 +136,4 @@ for source_path in [ROOT / "assets/js/catalog-repository.js", ROOT / "assets/js/
 
 print("Security static guardrails: PASS (CSP, local scripts only, no inline handlers/eval/Function/document.write)")
 print("Common credential-format scan: PASS (no matching token/private-key patterns found)")
-print("Security boundary disclosure (no backend/admin authentication): PASS")
+print("Security boundary disclosure (OTP backend deployment pending; admin authorization remains server-side): PASS")
