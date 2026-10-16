@@ -134,6 +134,58 @@ async function main() {
     assert.deepEqual(eventContract.seen, ['exact:test.compatibility_probe', 'wildcard:test.compatibility_probe']);
     assert.equal(eventContract.invalidCallback, 'TypeError');
     assert.match(eventContract.duplicateEngine, /Duplicate engine id/);
+
+    const schemaContract = await page.evaluate(() => {
+      const core = window.TBMC.engineCore;
+      const metadata = core.registerEventSchema('test.schema-probe', {
+        version: 1,
+        publisher: 'browser-smoke',
+        privacy: 'internal',
+        consumers: ['test-runner', 'test-runner'],
+        validate: payload => Boolean(payload && payload.ok === true)
+      });
+      const valid = core.validateEvent('test.schema-probe', { ok: true });
+      const invalid = core.validateEvent('test.schema-probe', { ok: false });
+      const unknown = core.validateEvent('test.unknown-schema', { ok: false });
+      let invalidPublish = '';
+      let delivered = 0;
+      const off = core.subscribe('test.schema-probe', () => { delivered += 1; });
+      try { core.publish('test.schema-probe', { ok: false }); } catch (error) { invalidPublish = error.name; }
+      const event = core.publish('test.schema-probe', { ok: true });
+      off();
+      let duplicateSchema = '';
+      try {
+        core.registerEventSchema('test.schema-probe', {
+          version: 1, publisher: 'browser-smoke', privacy: 'internal', consumers: [], validate: () => true
+        });
+      } catch (error) { duplicateSchema = error.message; }
+      return {
+        metadata,
+        valid,
+        invalid,
+        unknown,
+        invalidPublish,
+        delivered,
+        eventKeys: Object.keys(event).sort(),
+        publicMetadataHasValidator: Object.prototype.hasOwnProperty.call(core.getEventSchema('test.schema-probe'), 'validate'),
+        listed: core.listEventSchemas().some(schema => schema.type === 'test.schema-probe'),
+        duplicateSchema
+      };
+    });
+    assert.deepEqual(schemaContract.metadata, {
+      type: 'test.schema-probe', version: 1, publisher: 'browser-smoke',
+      privacy: 'internal', consumers: ['test-runner']
+    });
+    assert.equal(schemaContract.valid.valid, true);
+    assert.equal(schemaContract.invalid.valid, false);
+    assert.deepEqual(schemaContract.invalid.errors, ['INVALID_PAYLOAD']);
+    assert.equal(schemaContract.unknown.schemaRegistered, false, 'Unregistered legacy event types remain compatible');
+    assert.equal(schemaContract.invalidPublish, 'TypeError');
+    assert.equal(schemaContract.delivered, 1, 'Invalid schema payload must not be delivered');
+    assert.deepEqual(schemaContract.eventKeys, ['at', 'payload', 'type'], 'Schema metadata must not change the legacy event envelope');
+    assert.equal(schemaContract.publicMetadataHasValidator, false, 'Public schema snapshots must not expose validator callbacks');
+    assert.equal(schemaContract.listed, true);
+    assert.match(schemaContract.duplicateSchema, /Duplicate event schema/);
     assert.match(await page.locator('#page-profile').innerText(), /Admin authentication is not implemented/i);
     assert.doesNotMatch(await page.locator('body').innerText(), /Data unavailable/i, 'Healthy system must not report unavailable data');
     const configPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
