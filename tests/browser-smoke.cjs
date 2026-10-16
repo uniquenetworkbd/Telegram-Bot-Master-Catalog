@@ -168,6 +168,9 @@ async function main() {
 
     const schemaContract = await page.evaluate(() => {
       const core = window.TBMC.engineCore;
+      const builtInRegistered = core.getEventSchema('engine.registered') !== null;
+      const builtInValid = core.validateEvent('engine.registered', { id: 'schema-probe', version: '1.0.0' }).valid;
+      const builtInInvalid = core.validateEvent('catalog.search_used', { hasQuery: 'yes' });
       const metadata = core.registerEventSchema('test.schema-probe', {
         version: 1,
         publisher: 'browser-smoke',
@@ -197,6 +200,9 @@ async function main() {
         });
       } catch (error) { duplicateSchema = error.message; }
       return {
+        builtInRegistered,
+        builtInValid,
+        builtInInvalid,
         metadata: metadataBeforeMutation,
         valid,
         invalid,
@@ -210,6 +216,10 @@ async function main() {
         duplicateSchema
       };
     });
+    assert.equal(schemaContract.builtInRegistered, true);
+    assert.equal(schemaContract.builtInValid, true);
+    assert.equal(schemaContract.builtInInvalid.valid, false);
+    assert.deepEqual(schemaContract.builtInInvalid.errors, ['INVALID_PAYLOAD']);
     assert.deepEqual(schemaContract.metadata, {
       type: 'test.schema-probe', version: 1, publisher: 'browser-smoke',
       privacy: 'internal', consumers: ['test-runner']
