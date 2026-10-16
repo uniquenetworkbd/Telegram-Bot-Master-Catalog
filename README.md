@@ -59,6 +59,15 @@ A separate future live-bot directory would require per-bot existence verificatio
 
 The catalog research was checked against Telegram's official Bot Platform documentation and current ecosystem evidence. Telegram documents commands, keyboards, inline mode, Mini Apps, files/media, service integrations, payments and other bot capabilities. Independent directories such as TGSONAR provide evidence of a large live bot ecosystem, while a 2026 ICWSM study reported 32,071 bots in a large-scale research dataset.
 
+## Telegram Bot Engine foundation
+
+- [GitHub-native Telegram Bot architecture v1.0](docs/telegram/GITHUB-NATIVE-TELEGRAM-BOT-ARCHITECTURE-v1.0.md)
+- Browser Bot Engine registry: `assets/js/bot-engine.js`.
+- First module contract: `assets/js/bot-modules/catalog-query.js` (`/start`, `/help`, `/search <keyword>`).
+- Manual Telegram API smoke workflow: [Telegram Bot API smoke test](.github/workflows/telegram-bot-smoke.yml).
+
+The browser only manages module contracts and never calls Telegram with a bot token. The manual smoke workflow requires `TELEGRAM_BOT_TOKEN` as a GitHub Actions secret and `TELEGRAM_CHAT_ID` as an Actions variable. This foundation does not provide a persistent incoming-update runtime; see the architecture document for the exact boundary.
+
 ## Validation and deployment
 
 - [Catalog validation workflow](.github/workflows/catalog-validation.yml)
