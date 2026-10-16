@@ -95,9 +95,22 @@ async function main() {
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(await page.locator('#tbmcUnifiedNavigation').count(), 1, 'Same navigation module must remain available on mobile');
     assert.equal(await page.locator('.sidebar, .bottom-nav, #moreMenu').count(), 0, 'Legacy duplicate navigation must be removed');
+    // Authentication pages must render safely while the backend is intentionally unconfigured.
+    for (const route of ['login.html', 'register.html', 'logout.html']) {
+      const authPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      const authErrors = [];
+      authPage.on('pageerror', error => authErrors.push(error.message));
+      await authPage.goto(BASE + '/' + route, { waitUntil: 'networkidle' });
+      assert.equal(await authPage.locator('[data-auth-status]').isVisible(), true, route + ' should disclose the backend configuration state');
+      assert.match(await authPage.locator('[data-auth-status]').innerText(), /backend not configured/i, route + ' must not claim OTP is live without an API');
+      assert.ok(await authPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), route + ' must not overflow horizontally on mobile');
+      assert.deepEqual(authErrors, [], route + ' should have no uncaught JavaScript errors');
+      await authPage.close();
+    }
+
     assert.ok(await page.evaluate(() => Boolean(window.TBMC && window.TBMC.engineCore)), 'Main Engine runtime should be exposed');
     const engineIds = await page.evaluate(() => window.TBMC.engineCore.listEngines().map(engine => engine.id));
-    for (const requiredEngine of ['main-engine', 'engine-registry', 'catalog-data', 'catalog-ui', 'local-activity']) {
+    for (const requiredEngine of ['main-engine', 'engine-registry', 'catalog-data', 'catalog-ui', 'local-activity', 'auth-otp-engine']) {
       assert.ok(engineIds.includes(requiredEngine), 'Missing registered engine: ' + requiredEngine);
     }
     // Preserve the current synchronous Event Bus API before refactoring it.
@@ -370,6 +383,8 @@ async function main() {
         systemHealth: manager.getEngine('system-engine')?.health.status,
         botState: manager.getEngine('bot-engine')?.state,
         botHealth: manager.getEngine('bot-engine')?.health.status,
+        authState: manager.getEngine('auth-otp-engine')?.state,
+        authHealth: manager.getEngine('auth-otp-engine')?.health.status,
         botModuleCount: window.TBMC.botEngine.listModules().length,
         botStatus: window.TBMC.botEngine.getStatus(),
         loggingStatus: window.TBMC.loggingEngine.getStatus(),
@@ -407,6 +422,8 @@ async function main() {
     assert.equal(mainEngineContract.systemHealth, 'healthy');
     assert.equal(mainEngineContract.botState, 'active');
     assert.equal(mainEngineContract.botHealth, 'healthy');
+    assert.equal(mainEngineContract.authState, 'degraded', 'OTP engine must disclose that its backend is not configured');
+    assert.equal(mainEngineContract.authHealth, 'degraded');
     assert.equal(mainEngineContract.botModuleCount, 1);
     assert.equal(mainEngineContract.botStatus.tokenAvailableToBrowser, false);
     assert.equal(mainEngineContract.botStatus.persistentRuntime, false);
@@ -417,11 +434,11 @@ async function main() {
     assert.equal(mainEngineContract.adminCapabilities.authenticationConfigured, false);
     assert.equal(mainEngineContract.adminCapabilities.serverAuthorizationEnforced, false);
     assert.equal(mainEngineContract.systemSnapshot.runtimeState, 'ready');
-    assert.equal(mainEngineContract.systemSnapshot.engineCount, 10);
+    assert.equal(mainEngineContract.systemSnapshot.engineCount, 11);
     assert.equal(mainEngineContract.loadPromiseCached, true, 'Storage and Catalog must share the validated dataset load');
     assert.equal(mainEngineContract.runtimeReadySchema, true);
     assert.equal(mainEngineContract.catalogLoadedSchema, true);
-    assert.equal(mainEngineContract.engineCount, 10);
+    assert.equal(mainEngineContract.engineCount, 11);
 
     const botModuleContract = await page.evaluate(async () => {
       const bot = window.TBMC.botEngine;

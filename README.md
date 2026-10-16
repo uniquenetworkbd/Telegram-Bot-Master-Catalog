@@ -9,6 +9,7 @@ A mobile-first, data-driven catalog interface for exploring Telegram bot **conce
 - **BotCatalog** — search, filtering, sorting, and record browsing.
 - **Bot Details** — the available information for a selected record.
 - **Admin Profile** — public project/maintainer information.
+- **Login / Register / Logout** — separate Telegram OTP account pages. These are not live until the secure Worker backend and Telegram webhook are deployed.
 - **System** — dedicated submenu for System configuration, Logs & Audit, Version Logs and Live information.
   - **System configuration** — browser-local theme, density and reduced-motion preferences.
   - **Logs & Audit** — public GitHub Actions workflow runs and repository commits.
@@ -78,3 +79,15 @@ The browser only manages module contracts and never calls Telegram with a bot to
 The catalog validation workflow checks HTML structure, JavaScript syntax, catalog data integrity, and browser smoke paths. The research loader additionally validates the 1,000/100 invariants at runtime.
 
 A successful CI check is not a substitute for testing on a physical Android device. Public deployment should be reported as live only after a successful deployment run and the resulting site URL have been verified.
+
+## Authentication & OTP Bot Engine
+
+- [Authentication & OTP Bot Engine v1.0](docs/auth/AUTH-OTP-BOT-ENGINE-v1.0.md)
+- Frontend pages: `login.html`, `register.html`, `logout.html`.
+- Frontend module: `assets/js/auth-engine.js`; backend configuration: `assets/js/auth-config.js`.
+- Main Engine registry ID: `auth-otp-engine`.
+- Secure backend: `worker/auth-engine/index.js` (Cloudflare Worker + D1).
+- Database schema: `worker/auth-engine/schema.sql`.
+- Automated contract checks: `tests/auth-engine-contract.mjs`.
+
+The frontend intentionally refuses to claim authentication success while the API URL is blank. The OTP backend has not been deployed or live-tested by this repository change. Configure the Cloudflare Worker, D1 database, Telegram OTP webhook and same-origin API routing before production use.
