@@ -236,6 +236,45 @@ async function main() {
     assert.equal(schemaContract.listed, true);
     assert.match(schemaContract.duplicateSchema, /Duplicate event schema/);
 
+    const mainEngineContract = await page.evaluate(async () => {
+      const main = window.TBMC.mainEngine;
+      const manager = window.TBMC.moduleManager;
+      const repository = window.TBMC.catalogRepository;
+      if (!main) return { available: false };
+      const first = await main.bootstrap();
+      const second = await main.bootstrap();
+      const datasetA = await repository.load();
+      const datasetB = await repository.load();
+      return {
+        available: true,
+        state: main.getState(),
+        firstStatus: first.status,
+        secondStatus: second.status,
+        readyAtStable: first.readyAt === second.readyAt,
+        storageState: manager.getEngine('storage-engine')?.state,
+        storageHealth: manager.getEngine('storage-engine')?.health.status,
+        catalogState: manager.getEngine('catalog-engine')?.state,
+        catalogHealth: manager.getEngine('catalog-engine')?.health.status,
+        loadPromiseCached: datasetA === datasetB,
+        runtimeReadySchema: window.TBMC.engineCore.getEventSchema('runtime.ready') !== null,
+        catalogLoadedSchema: window.TBMC.engineCore.getEventSchema('catalog.loaded') !== null,
+        engineCount: main.getRuntimeInfo().managedEngineCount
+      };
+    });
+    assert.equal(mainEngineContract.available, true);
+    assert.equal(mainEngineContract.state, 'ready');
+    assert.equal(mainEngineContract.firstStatus, 'ready');
+    assert.equal(mainEngineContract.secondStatus, 'ready');
+    assert.equal(mainEngineContract.readyAtStable, true, 'Bootstrap must be idempotent');
+    assert.equal(mainEngineContract.storageState, 'active');
+    assert.equal(mainEngineContract.storageHealth, 'healthy');
+    assert.equal(mainEngineContract.catalogState, 'active');
+    assert.equal(mainEngineContract.catalogHealth, 'healthy');
+    assert.equal(mainEngineContract.loadPromiseCached, true, 'Storage and Catalog must share the validated dataset load');
+    assert.equal(mainEngineContract.runtimeReadySchema, true);
+    assert.equal(mainEngineContract.catalogLoadedSchema, true);
+    assert.equal(mainEngineContract.engineCount, 2);
+
     const moduleManagerContract = await page.evaluate(async () => {
       const manager = window.TBMC.moduleManager;
       const core = window.TBMC.engineCore;

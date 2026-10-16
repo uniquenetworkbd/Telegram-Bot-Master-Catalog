@@ -301,6 +301,24 @@
       payload => validObject(payload) && validRoute(payload.route));
     schema('catalog.search_used', 'catalog-ui', 'usage', ['analytics'],
       payload => validObject(payload) && typeof payload.hasQuery === 'boolean');
+    schema('catalog.loaded', 'storage-engine', 'internal', ['catalog', 'analytics'],
+      payload => validObject(payload) && payload.records === 1000 && payload.categories === 100);
+    schema('storage.load_failed', 'storage-engine', 'internal', ['logging', 'system'],
+      payload => validObject(payload) && validString(payload.code));
+    schema('runtime.starting', 'main-engine', 'internal', ['system', 'logging'],
+      payload => validObject(payload) && validString(payload.version) && eventVersionPattern.test(payload.version));
+    schema('runtime.ready', 'main-engine', 'internal', ['system', 'logging'],
+      payload => validObject(payload) && validString(payload.version) && eventVersionPattern.test(payload.version) &&
+        Number.isSafeInteger(payload.engineCount) && payload.engineCount >= 2 && !Number.isNaN(Date.parse(payload.readyAt)));
+    schema('runtime.failed', 'main-engine', 'internal', ['system', 'logging'],
+      payload => validObject(payload) && validString(payload.code));
+    schema('runtime.shutdown_started', 'main-engine', 'internal', ['system', 'logging'],
+      payload => validObject(payload) && validString(payload.version) && eventVersionPattern.test(payload.version));
+    schema('runtime.shutdown_complete', 'main-engine', 'internal', ['system', 'logging'],
+      payload => validObject(payload) && validString(payload.version) && eventVersionPattern.test(payload.version) &&
+        !Number.isNaN(Date.parse(payload.shutdownAt)));
+    schema('runtime.shutdown_failed', 'main-engine', 'internal', ['system', 'logging'],
+      payload => validObject(payload) && validString(payload.code));
   }
 
   registerBuiltInEventSchemas();
