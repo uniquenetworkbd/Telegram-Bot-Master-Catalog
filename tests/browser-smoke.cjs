@@ -81,16 +81,20 @@ async function main() {
 
     assert.equal(await page.locator('#page-system').count(), 0, 'System must be a navigation group, not a separate hub page');
     await page.setViewportSize({ width: 1280, height: 900 });
-    assert.equal(await page.locator('#systemMenuToggle').count(), 1, 'System parent must live in primary navigation');
-    assert.deepEqual(await page.locator('#systemSubmenu a').evaluateAll(links => links.map(link => link.getAttribute('href'))), ['./pages/system-configuration.html', './pages/logs-audit.html', './pages/version-logs.html', './pages/live-information.html']);
-    assert.match((await page.locator('#systemSubmenu').innerText()).replace(/[⚙≋◷◉]/g, ''), /System configuration[\s\S]*Logs & Audit[\s\S]*Version Logs[\s\S]*Live information/);
-    await page.locator('#systemMenuToggle').click();
-    assert.equal(await page.locator('#systemSubmenu').isVisible(), false, 'System submenu should collapse');
-    await page.locator('#systemMenuToggle').click();
-    assert.equal(await page.locator('#systemSubmenu').isVisible(), true, 'System submenu should expand');
+    assert.equal(await page.locator('#tbmcUnifiedNavigation').count(), 1, 'Shared bottom navigation module must load');
+    const navToggle = page.locator('.tbmc-bottom-toggle');
+    assert.equal(await navToggle.isVisible(), true, 'Main navigation toggle must be visible');
+    await navToggle.click();
+    assert.equal(await page.locator('#tbmcBottomPanel').isVisible(), true, 'Bottom navigation panel should open upwards');
+    assert.deepEqual(await page.locator('#tbmcSystemLinks a').evaluateAll(links => links.map(link => link.getAttribute('href'))), ['./pages/system-configuration.html', './pages/logs-audit.html', './pages/version-logs.html', './pages/live-information.html']);
+    assert.match((await page.locator('#tbmcSystemLinks').innerText()).replace(/[⚙≋◷◉]/g, ''), /System configuration[\s\S]*Logs & Audit[\s\S]*Version Logs[\s\S]*Live information/);
+    await page.locator('.tbmc-system-toggle').click();
+    assert.equal(await page.locator('#tbmcSystemLinks').isVisible(), false, 'Shared System submenu should collapse');
+    await page.locator('.tbmc-system-toggle').click();
+    assert.equal(await page.locator('#tbmcSystemLinks').isVisible(), true, 'Shared System submenu should expand');
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.locator('#moreNavBtn').click();
-    assert.equal(await page.locator('#moreMenu .mobile-system-group a').count(), 4, 'Mobile More menu must expose the same System submenu');
+    assert.equal(await page.locator('#tbmcUnifiedNavigation').count(), 1, 'Same navigation module must remain available on mobile');
+    assert.equal(await page.locator('.sidebar, .bottom-nav, #moreMenu').count(), 0, 'Legacy duplicate navigation must be removed');
     assert.ok(await page.evaluate(() => Boolean(window.TBMC && window.TBMC.engineCore)), 'Main Engine runtime should be exposed');
     const engineIds = await page.evaluate(() => window.TBMC.engineCore.listEngines().map(engine => engine.id));
     for (const requiredEngine of ['main-engine', 'engine-registry', 'catalog-data', 'catalog-ui', 'local-activity']) {
