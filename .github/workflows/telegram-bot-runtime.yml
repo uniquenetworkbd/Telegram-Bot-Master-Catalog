@@ -30,13 +30,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Node.js
-        if: ${{ secrets.TELEGRAM_BOT_TOKEN != '' }}
+        if: ${{ env.TELEGRAM_BOT_TOKEN != '' }}
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
       - name: Restore the last successful update offset
-        if: ${{ secrets.TELEGRAM_BOT_TOKEN != '' }}
+        if: ${{ env.TELEGRAM_BOT_TOKEN != '' }}
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -49,7 +49,7 @@ jobs:
           fi
 
       - name: Validate Telegram worker and module contracts
-        if: ${{ secrets.TELEGRAM_BOT_TOKEN != '' }}
+        if: ${{ env.TELEGRAM_BOT_TOKEN != '' }}
         run: |
           node --check scripts/telegram/poll-updates.mjs
           node --check scripts/telegram/csv.mjs
@@ -57,7 +57,7 @@ jobs:
           node --test tests/telegram-module-contract.mjs
 
       - name: Poll Telegram and dispatch supported bot modules
-        if: ${{ secrets.TELEGRAM_BOT_TOKEN != '' }}
+        if: ${{ env.TELEGRAM_BOT_TOKEN != '' }}
         env:
           GITHUB_WORKSPACE: ${{ github.workspace }}
         run: node scripts/telegram/poll-updates.mjs
