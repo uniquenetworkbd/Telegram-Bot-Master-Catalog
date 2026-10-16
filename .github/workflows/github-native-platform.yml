@@ -14,6 +14,9 @@ on:
       - 'assets/js/system-configuration.js'
       - 'assets/js/version-logs.js'
       - 'assets/js/live-information.js'
+      - 'assets/js/global-bottom-nav.js'
+      - 'index.html'
+      - 'assets/css/app.css'
       - 'docs/architecture/GITHUB-NATIVE-SERVER-SIDE-ARCHITECTURE-v1.0.md'
       - 'scripts/**'
       - '.github/workflows/github-native-platform.yml'
@@ -47,9 +50,10 @@ jobs:
           grep -q "GitHub-native" pages/platform-status.html
           grep -q "LIVE GITHUB DATA" pages/logs-audit.html
           grep -q "assets/js/logs-audit.js" pages/logs-audit.html
-          grep -q "System configuration" index.html
-          grep -q "Version Logs" index.html
-          grep -q "Live information" index.html
+          grep -qi "System configuration" assets/js/global-bottom-nav.js
+          grep -qi "Version Logs" assets/js/global-bottom-nav.js
+          grep -qi "Live information" assets/js/global-bottom-nav.js
+          grep -q "tbmc-bottom-navigation" assets/js/global-bottom-nav.js
           grep -q "themeSelect" pages/system-configuration.html
           grep -q "version-logs.js" pages/version-logs.html
           grep -q "live-information.js" pages/live-information.html
@@ -60,6 +64,7 @@ jobs:
           node --check assets/js/system-configuration.js
           node --check assets/js/version-logs.js
           node --check assets/js/live-information.js
+          node --check assets/js/global-bottom-nav.js
       - name: Report platform boundary
         run: |
           echo "GitHub-native platform audit passed."
