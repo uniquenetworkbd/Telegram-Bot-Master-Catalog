@@ -47,9 +47,9 @@ Implemented in source:
 - Automated CSV parser and Telegram module contract tests.
 
 Not implemented or not yet verified:
-- No bot token/chat ID has been supplied through repository settings by this code change.
-- The smoke workflow has not been confirmed against a real Telegram chat until it is manually run with valid secrets/variables.
-- Durable conversation state, central user/session storage, private admin authentication, and a production-grade always-on runtime require a later runtime/backend phase. No external hosting/database platform is added in this phase.
+- No bot token has been supplied through repository settings by this code change. The poller and smoke workflow remain inactive until the secret is configured.
+- Neither the scheduled poller nor the smoke workflow has been verified against a real Telegram chat until repository secrets are configured and a successful run is observed.
+- The poller provides periodic incoming-update processing, but not real-time delivery, durable conversation state, central user/session storage, private admin authentication, or a production-grade always-on runtime. Those require a later runtime/backend phase. No external hosting/database platform is added in this phase.
 
 ## Security and release rules
 
