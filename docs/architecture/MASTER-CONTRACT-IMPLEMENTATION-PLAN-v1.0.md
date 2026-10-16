@@ -148,15 +148,28 @@ The Manager is the only authority for lifecycle transitions. Invalid transitions
 ### Lifecycle rules
 
 - Lifecycle hooks may be asynchronous; handle thrown errors and rejected promises.
+- New managed definitions require SemVer `version` and `contractVersion`, dependencies, declared string arrays, and a `lifecycle.healthCheck` function.
+- Dependency constraints supported by v1 are `*`, exact SemVer, caret (`^x.y.z`), and tilde (`~x.y.z`). Prerelease comparison for ranges is not claimed; use exact matching for prerelease versions.
+- Each lifecycle hook has a 5-second timeout. A timed-out promise cannot be forcibly terminated in the shared browser runtime; the Engine is marked failed and cleanup is attempted best-effort.
 - Repeated start/stop/enable/disable calls are idempotent documented no-ops where appropriate.
-- Startup order follows the resolved dependency graph; stop/cleanup uses reverse dependency order.
-- A failed start cleans up subscriptions/resources acquired during that attempt.
-- A provider cannot be stopped, disabled, or unregistered while required dependents remain active unless an explicit controlled cascade is requested. Default behavior: reject.
+- Startup follows dependency-first order; stopping and cleanup follow dependent-first order when a controlled cascade is requested.
+- A failed start cleans up subscriptions/resources acquired during that attempt and marks unstarted dependents blocked.
+- A provider cannot be stopped or disabled while required dependents are active unless `{ cascade: true }` is explicitly requested. Default behavior: reject.
+- Unregister is rejected while required dependents remain registered unless `{ cascade: true }` is explicitly requested.
 - Restart is stop → cleanup → revalidate → initialize → start → health check.
-- Retries are bounded; validation errors are not retried.
 - One Engine's failure must not prevent unrelated Engines from registering or running, within the limitations of the shared JS runtime.
+- A health report must return `healthy` or `degraded` to complete startup; `unknown`, `unhealthy`, a thrown error, or a timeout fails startup.
 - If the Event Bus or Logging Engine fails, local state must remain consistent and errors must not recursively emit forever.
-- Health check exceptions produce a safe unhealthy/unknown report; no callback does not mean healthy.
+
+### Implemented Module Manager API (v1)
+- `register(definition)`: validates required metadata and records a managed Engine in `registered` state without auto-starting it.
+- `validate(id)`: resolves the target's dependency closure and returns a deterministic startup order plus optional-dependency warnings.
+- `resolveDependencies(id)`: returns `{ order, warnings }`; throws coded errors for missing required dependencies, cycles, disabled dependencies, or incompatible versions.
+- `start(id)`: validates and starts managed dependencies first; legacy registered engines are treated as existing providers only if active and healthy.
+- `stop(id, options)`, `restart(id)`, `enable(id)`, `disable(id, options)`, `unregister(id, options)`: manage lifecycle with dependent checks and explicit cascade policy.
+- `getEngine(id)`, `listEngines()`, `getHealth(id)`: return safe copies, never internal records or callbacks.
+- Lifecycle context provides `publish` and `subscribe`; subscription cleanup handles are removed during stop/failure.
+- Engine Core's legacy `listEngines()` now merges legacy and managed snapshots for System UI. The existing `register()` API remains available and preserves its legacy return shape.
 
 ### Registry UI
 
@@ -295,7 +308,9 @@ The repository previously had a 44-tracked-file mapping. This table identifies t
 
 | Priority | Source/path | Target owner | Migration rule |
 |---|---|---|---|
-| P0 | `assets/js/engine-core.js` | Main Engine, Module Manager, Event Bus, shared runtime adapter | Freeze API/event/registry baseline; refactor additively |
+| P0 | `assets/js/engine-core.js` | Main Engine, legacy registry, Event Bus | Preserve legacy registry/event API; provide combined runtime snapshots and safe refresh hook |
+| P0 | `assets/js/module-manager.js` | Module Manager | New managed registry, dependency graph, lifecycle, health and cleanup; new-format definitions only |
+| P0 | `index.html` | Runtime bootstrap / Presentation | Load order: catalog repository → app shell → engine core → Module Manager → Catalog feature → shared navigation |
 | P0 | `assets/js/catalog-repository.js` | Storage Engine | Preserve public methods and CSV validation |
 | P0 | `assets/js/catalog-feature.js` | Catalog/Search UI adapter, metrics presentation | Move behavior only after API/call-site inventory |
 | P0 | `data/Telegram_Bot_Master_Catalog_1000.csv` | Storage data source | No content changes in engine migration |
@@ -515,9 +530,12 @@ The migration is complete only when all conditions are evidenced:
 - [x] Current Event Bus public behavior inspected in `assets/js/engine-core.js`.
 - [x] Catalog repository and Catalog UI entry points inspected.
 - [x] Baseline main commit recorded: `c3dcc4591ca9afcc1da83690a06584d81b03d32b`.
-- [ ] Repository-wide call-site inventory completed.
-- [x] Event Bus compatibility and schema-validation tests added and passing on PR head `f88aedd2a1678cfff4dd3b6c0bf0a6ed7eb8052f`.
+- [x] Event Bus/registry call-site inventory completed for the inspected runtime and System files: `assets/js/engine-core.js`, `assets/js/app-shell.js`, `assets/js/catalog-repository.js`, `assets/js/catalog-feature.js`, `assets/js/global-bottom-nav.js`, `assets/js/logs-audit.js`, `assets/js/system-configuration.js`, `assets/js/version-logs.js`, `assets/js/live-information.js`, four System page HTML files, `index.html`, and browser/CI checks.
+- [ ] Full tracked-file inventory beyond the verified runtime, System, data, test, and workflow paths completed; do not invent unverified paths.
+- [x] Event Bus compatibility and schema-validation tests passed on PR #19 before merge.
 - [x] First bounded implementation change completed: backward-compatible Event Schema Registry in `assets/js/engine-core.js`.
+- [x] Module Manager implementation started in branch `module-manager-lifecycle-v1`: new `assets/js/module-manager.js`, runtime script integration, combined System registry snapshots, and lifecycle/dependency browser tests.
+- [x] Module Manager static/data checks and browser regression passed on code/test commit `ac38067666f2d3f0656207ac5ad76ffc8a0288ac`: Catalog validation run [38852328985](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38852328985), platform audit run [38852328926](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38852328926).
 - [x] Catalog data/static validation passed in workflow run [38851503758](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38851503758).
 - [x] Browser regression passed in the same run: Chromium, Firefox and WebKit; 1,000 records / 100 categories; search/filter/details/history/pagination/export/theme/System/XSS checks; mobile 390px and desktop 1440px; zero uncaught page errors and local HTTP errors.
 - [x] Platform audit passed in workflow run [38851503827](https://github.com/uniquenetworkbd/Telegram-Bot-Master-Catalog/actions/runs/38851503827) after correcting stale checks for absent, unapproved pages.
@@ -525,4 +543,4 @@ The migration is complete only when all conditions are evidenced:
 
 **Current state:** the source, tests, workflow correction and master plan are in PR #19. CI passed on the current code/test commit; live deployment is not yet claimed because the PR has not been merged and the live URL has not been verified.
 
-**Next action:** finish the repository-wide call-site inventory, then implement Module Manager dependency/lifecycle behavior in a separate bounded code change. No additional contract/architecture documents are to be created; update this master plan only when a decision genuinely changes.
+**Next action:** complete the remaining tracked-file inventory before extracting Catalog/Storage/Search behavior; then migrate one Engine at a time with tests in the same change. Module Manager implementation is in PR #20; verify its final head checks, merge it, and verify the main branch/live deployment separately. No additional contract/architecture documents are to be created; update this master plan only when a decision genuinely changes.

@@ -123,7 +123,7 @@
     if (!definition || !/^[a-z][a-z0-9.-]{1,63}$/.test(definition.id || '')) {
       throw new TypeError('Engine definition requires a valid stable id');
     }
-    if (engines.has(definition.id)) throw new Error('Duplicate engine id: ' + definition.id);
+    if (engines.has(definition.id) || (window.TBMC && window.TBMC.moduleManager && window.TBMC.moduleManager.getEngine(definition.id))) throw new Error('Duplicate engine id: ' + definition.id);
     const record = Object.freeze({
       id: definition.id,
       name: String(definition.name || definition.id),
@@ -142,16 +142,21 @@
   }
 
   function listEngines() {
-    return [...engines.values()].map(engine => {
+    const legacy = [...engines.values()].map(engine => {
       let health;
       try { health = engine.health(); } catch (_) { health = { status: 'error', detail: 'Health check threw an exception' }; }
       return {
         id: engine.id, name: engine.name, version: engine.version,
         description: engine.description, kind: engine.kind,
         dependencies: [...engine.dependencies], capabilities: [...engine.capabilities],
-        state: engine.state, health: health || { status: 'unknown', detail: 'No health result' }
+        state: engine.state, enabled: true,
+        health: health || { status: 'unknown', detail: 'No health result' }
       };
     });
+    const managed = window.TBMC && window.TBMC.moduleManager
+      ? window.TBMC.moduleManager.listEngines()
+      : [];
+    return legacy.concat(managed);
   }
 
   function diagnosticsEnabled() {
@@ -242,7 +247,8 @@
       const status = item.health.status === 'healthy' ? 'green' : 'amber';
       return '<div class="metarow" style="align-items:flex-start;gap:12px"><div style="min-width:0;flex:1"><strong>' +
         escapeHTML(item.name) + '</strong><div class="sub">' + escapeHTML(item.id) + ' · v' + escapeHTML(item.version) +
-        '</div><div class="sub">' + escapeHTML(item.description) + '</div><div class="sub">Dependencies: ' +
+        '</div><div class="sub">' + escapeHTML(item.description) + '</div><div class="sub">State: ' + escapeHTML(item.state || 'unknown') +
+        ' · ' + (item.enabled === false ? 'Disabled' : 'Enabled') + '</div><div class="sub">Dependencies: ' +
         escapeHTML(deps) + '</div><div class="sub">Capabilities: ' + escapeHTML(capabilities) +
         '</div></div><span class="tag ' + status + '">' + escapeHTML(item.health.status) + '</span></div>';
     }).join('');
@@ -326,6 +332,7 @@
     listEventSchemas,
     register,
     listEngines,
+    refreshManager: renderManager,
     diagnosticsEnabled,
     clearLocalActivity: () => { try { sessionStorage.removeItem(sessionEventsKey); } catch (_) {} }
   });
