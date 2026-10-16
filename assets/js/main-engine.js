@@ -213,6 +213,102 @@
     });
   }
 
+  function ensureLoggingEngine() {
+    if (manager.getEngine('logging-engine')) return;
+    manager.register({
+      id: 'logging-engine', name: 'Logging Engine', version: VERSION, contractVersion: VERSION,
+      description: 'Keeps a bounded, in-memory event index without storing event payloads or uploading activity.',
+      dependencies: [], capabilities: ['event-type log', 'schema publisher metadata', 'bounded in-memory history'],
+      provides: ['runtime.logs'], publishes: [], subscribes: ['*'],
+      lifecycle: {
+        validate: () => Boolean(window.TBMC.loggingEngine &&
+          typeof window.TBMC.loggingEngine.start === 'function' &&
+          typeof window.TBMC.loggingEngine.listRecent === 'function'),
+        init: async () => {},
+        start: async context => window.TBMC.loggingEngine.start(context),
+        healthCheck: async () => window.TBMC.loggingEngine.getStatus().listening
+          ? { status: 'healthy', detail: 'Bounded in-memory event index is listening; payloads are not retained' }
+          : { status: 'unhealthy', detail: 'Logging subscription is not active' },
+        stop: async () => window.TBMC.loggingEngine.stop(),
+        destroy: async () => window.TBMC.loggingEngine.stop()
+      }
+    });
+  }
+
+  function ensureSecurityEngine() {
+    if (manager.getEngine('security-engine')) return;
+    manager.register({
+      id: 'security-engine', name: 'Security Engine', version: VERSION, contractVersion: VERSION,
+      description: 'Audits selected document-level CSP, script-origin and inline-handler controls.',
+      dependencies: [], capabilities: ['CSP check', 'same-origin script check', 'inline event-handler check'],
+      provides: ['runtime.security-audit'], publishes: [], subscribes: [],
+      lifecycle: {
+        validate: () => Boolean(window.TBMC.securityEngine && typeof window.TBMC.securityEngine.inspectDocument === 'function'),
+        init: async () => {},
+        start: async () => {},
+        healthCheck: async () => {
+          const report = window.TBMC.securityEngine.inspectDocument();
+          return report.passed
+            ? { status: 'healthy', detail: 'Document-level policy checks passed; this is not a complete security guarantee' }
+            : { status: 'unhealthy', detail: 'Document security audit found: ' + report.findings.map(item => item.code).join(', ') };
+        },
+        stop: async () => {},
+        destroy: async () => {}
+      }
+    });
+  }
+
+  function ensureAdminEngine() {
+    if (manager.getEngine('admin-engine')) return;
+    manager.register({
+      id: 'admin-engine', name: 'Admin Engine', version: VERSION, contractVersion: VERSION,
+      description: 'Reports static project-profile capabilities; does not claim authenticated admin access.',
+      dependencies: [{ id: 'storage-engine', version: '^1.0.0' }],
+      capabilities: ['project metadata profile', 'admin capability disclosure'],
+      provides: ['admin.profile-capabilities'], publishes: [], subscribes: [],
+      lifecycle: {
+        validate: () => Boolean(window.TBMC.adminEngine && typeof window.TBMC.adminEngine.getCapabilities === 'function'),
+        init: async () => {},
+        start: async () => {},
+        healthCheck: async () => {
+          const capabilities = window.TBMC.adminEngine.getCapabilities();
+          return capabilities.profilePageAvailable && capabilities.authenticationConfigured === false
+            ? { status: 'healthy', detail: 'Static profile is available; authenticated administration is explicitly not configured' }
+            : { status: 'unhealthy', detail: 'Admin profile capability state is inconsistent' };
+        },
+        stop: async () => {},
+        destroy: async () => {}
+      }
+    });
+  }
+
+  function ensureSystemEngine() {
+    if (manager.getEngine('system-engine')) return;
+    manager.register({
+      id: 'system-engine', name: 'System Engine', version: VERSION, contractVersion: VERSION,
+      description: 'Provides a consolidated runtime snapshot and truthful static-platform capability boundaries.',
+      dependencies: [
+        { id: 'logging-engine', version: '^1.0.0' },
+        { id: 'security-engine', version: '^1.0.0' }
+      ],
+      capabilities: ['runtime snapshot', 'event schema count', 'local diagnostics status', 'system module inventory'],
+      provides: ['system.runtime-snapshot'], publishes: [], subscribes: [],
+      lifecycle: {
+        validate: () => Boolean(window.TBMC.systemEngine && typeof window.TBMC.systemEngine.snapshot === 'function'),
+        init: async () => {},
+        start: async () => {},
+        healthCheck: async () => {
+          const snapshot = window.TBMC.systemEngine.snapshot();
+          return snapshot.runtimeState === 'starting' || snapshot.runtimeState === 'ready' || snapshot.runtimeState === 'degraded'
+            ? { status: 'healthy', detail: 'Runtime and local System capability snapshot are available' }
+            : { status: 'unhealthy', detail: 'Main runtime is not in a startable state' };
+        },
+        stop: async () => {},
+        destroy: async () => {}
+      }
+    });
+  }
+
   async function bootstrap() {
     if (state.status === 'ready' || state.status === 'degraded') return runtimeInfo();
     if (state.bootstrapPromise) return state.bootstrapPromise;
@@ -228,16 +324,24 @@
       ensureSearchEngine();
       ensureCatalogEngine();
       ensureAnalyticsEngine();
+      ensureLoggingEngine();
+      ensureSecurityEngine();
+      ensureAdminEngine();
+      ensureSystemEngine();
       await manager.start('catalog-engine');
       await manager.start('history-engine');
       await manager.start('analytics-engine');
+      await manager.start('admin-engine');
+      await manager.start('system-engine');
       const storage = manager.getEngine('storage-engine');
       const catalog = manager.getEngine('catalog-engine');
-      if (!storage || !catalog || !['active', 'degraded'].includes(storage.state) ||
-          !['active', 'degraded'].includes(catalog.state)) {
-        throw managerError('RUNTIME_NOT_READY', 'Required Storage and Catalog Engines are not ready');
+      const requiredIds = ['storage-engine', 'search-engine', 'catalog-engine', 'history-engine', 'analytics-engine', 'logging-engine', 'security-engine', 'admin-engine', 'system-engine'];
+      const required = requiredIds.map(id => manager.getEngine(id));
+      const unhealthy = required.filter(engine => !engine || !['active', 'degraded'].includes(engine.state) || !['healthy', 'degraded'].includes(engine.health.status));
+      if (!storage || !catalog || unhealthy.length) {
+        throw managerError('RUNTIME_NOT_READY', 'Required Engines are not ready: ' + unhealthy.map(engine => engine ? engine.id : 'missing-engine').join(', '));
       }
-      state.status = storage.state === 'degraded' || catalog.state === 'degraded' ? 'degraded' : 'ready';
+      state.status = required.some(engine => engine.state === 'degraded' || engine.health.status === 'degraded') ? 'degraded' : 'ready';
       state.readyAt = new Date().toISOString();
       core.publish('runtime.ready', {
         version: VERSION,
@@ -268,7 +372,7 @@
     core.publish('runtime.shutdown_started', { version: VERSION });
     state.shutdownPromise = (async () => {
       const failures = [];
-      for (const id of ['history-engine', 'catalog-engine', 'search-engine', 'analytics-engine', 'storage-engine']) {
+      for (const id of ['system-engine', 'admin-engine', 'history-engine', 'catalog-engine', 'search-engine', 'analytics-engine', 'security-engine', 'logging-engine', 'storage-engine']) {
         const engine = manager.getEngine(id);
         if (!engine || !['active', 'degraded', 'failed', 'initialized', 'starting', 'blocked'].includes(engine.state)) continue;
         try { await manager.stop(id); }

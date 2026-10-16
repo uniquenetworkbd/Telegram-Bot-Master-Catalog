@@ -18,6 +18,10 @@ on:
       - 'assets/js/module-manager.js'
       - 'assets/js/search-engine.js'
       - 'assets/js/analytics-engine.js'
+      - 'assets/js/logging-engine.js'
+      - 'assets/js/security-engine.js'
+      - 'assets/js/admin-engine.js'
+      - 'assets/js/system-engine.js'
       - 'assets/js/main-engine.js'
       - 'index.html'
       - 'assets/css/app.css'
@@ -62,6 +66,10 @@ jobs:
           node --check assets/js/module-manager.js
           node --check assets/js/search-engine.js
           node --check assets/js/analytics-engine.js
+          node --check assets/js/logging-engine.js
+          node --check assets/js/security-engine.js
+          node --check assets/js/admin-engine.js
+          node --check assets/js/system-engine.js
           node --check assets/js/main-engine.js
           node --check assets/js/logs-audit.js
           node --check assets/js/system-configuration.js
