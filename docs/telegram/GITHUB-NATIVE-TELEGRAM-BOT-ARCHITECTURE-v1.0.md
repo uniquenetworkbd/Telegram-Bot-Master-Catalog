@@ -2,7 +2,7 @@
 
 **Repository:** `uniquenetworkbd/Telegram-Bot-Master-Catalog`  
 **Scope:** GitHub-hosted source, GitHub Actions, Telegram Bot API only  
-**Status:** Initial modular foundation; API smoke workflow requires repository configuration and has not been live-verified without credentials.
+**Status:** Modular Bot Engine, catalog-query module, and scheduled GitHub Actions polling source are implemented; live Telegram operation remains unverified until the repository secret is configured.
 
 ## Current platform boundary
 
@@ -29,7 +29,7 @@ A module has a stable ID, SemVer version, description, command list, capabilitie
 
 ## Polling runtime behavior
 
-- The scheduled workflow is a best-effort, five-minute poller, not a real-time webhook. GitHub may delay scheduled runs; it is not a service-level guarantee.
+- The scheduled workflow is a best-effort, five-minute poller, not a real-time webhook. GitHub may delay scheduled runs; it is not a service-level guarantee. Each run sends at most ten replies to limit bursts.
 - The first run without a saved offset advances past already-pending updates to avoid unexpectedly replying to old messages. Subsequent runs process new updates.
 - Offset state is kept in a GitHub Actions artifact; this is not a transactional database. A failed run can cause a duplicate reply on a retry, so processing is at-least-once rather than exactly-once.
 - The bot accepts public catalog search commands from chats that can reach it. It does not store raw message content or chat history. Do not add private or sensitive user workflows without a separate privacy/security review.
