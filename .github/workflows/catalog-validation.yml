@@ -32,6 +32,10 @@ jobs:
           node --check assets/js/module-manager.js
           node --check assets/js/search-engine.js
           node --check assets/js/analytics-engine.js
+          node --check assets/js/logging-engine.js
+          node --check assets/js/security-engine.js
+          node --check assets/js/admin-engine.js
+          node --check assets/js/system-engine.js
           node --check assets/js/main-engine.js
           node --check assets/js/catalog-feature.js
           node --check assets/js/global-bottom-nav.js
