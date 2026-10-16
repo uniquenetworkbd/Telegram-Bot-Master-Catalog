@@ -46,7 +46,7 @@ async function main() {
     assert.equal(await page.locator('#tbmcBottomPanel').isVisible(), true, 'Main navigation panel must open');
     assert.equal(await page.locator('#tbmcSystemLinks a').count(), 4, 'System submenu must expose four links');
     assert.deepEqual(await page.locator('#tbmcSystemLinks a').evaluateAll(links => links.map(link => link.getAttribute('href'))), ['./pages/system-configuration.html', './pages/logs-audit.html', './pages/version-logs.html', './pages/live-information.html']);
-    assert.match((await page.locator('#tbmcSystemLinks').innerText()).replace(/[⚙≋◷◉]/g, ''), /System configuration[\\s\\S]*Logs & Audit[\\s\\S]*Version Logs[\\s\\S]*Live information/);
+    assert.match((await page.locator('#tbmcSystemLinks').innerText()).replace(/[⚙≋◷◉]/g, ''), /System configuration[\s\S]*Logs & Audit[\s\S]*Version Logs[\s\S]*Live information/);
     await page.locator('.tbmc-system-toggle').click();
     assert.equal(await page.locator('#tbmcSystemLinks').isVisible(), false, 'System submenu should collapse');
     await page.locator('.tbmc-system-toggle').click();
