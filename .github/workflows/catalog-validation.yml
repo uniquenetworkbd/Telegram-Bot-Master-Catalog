@@ -23,6 +23,8 @@ jobs:
           node-version: 20
       - name: Independent catalog integrity audit
         run: python3 scripts/validate_catalog.py
+      - name: Telegram module contract tests
+        run: node --test tests/telegram-module-contract.mjs
       - name: JavaScript syntax checks
         run: |
           node --check assets/js/catalog-repository.js
@@ -40,6 +42,9 @@ jobs:
           node --check assets/js/engine-manager-page.js
           node --check assets/js/bot-modules/catalog-query.js
           node --check scripts/telegram/send-smoke-message.mjs
+          node --check scripts/telegram/poll-updates.mjs
+          node --check scripts/telegram/csv.mjs
+          node --check scripts/telegram/bot-modules/catalog-query.mjs
           node --check assets/js/main-engine.js
           node --check assets/js/catalog-feature.js
           node --check assets/js/global-bottom-nav.js
