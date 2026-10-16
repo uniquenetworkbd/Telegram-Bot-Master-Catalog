@@ -2,7 +2,7 @@
   if (document.getElementById('tbmcUnifiedNavigation')) return;
   const inPages = /\/pages\//.test(location.pathname);
   const base = inPages ? '../' : './';
-  const current = location.pathname.split('/').pop() || 'index.html';
+  const current = location.pathname.endsWith('/') ? 'index.html' : (location.pathname.split('/').pop() || 'index.html');
   const destinations = [
     {href: base+'index.html#home', icon:'⌂', label:'Home', route:'home'},
     {href: base+'index.html#dashboard', icon:'▦', label:'Dashboard', route:'dashboard'},
@@ -53,8 +53,9 @@
   });
   document.addEventListener('click', event => { if (!root.contains(event.target)) close(); });
   document.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });
-  root.querySelectorAll('a[href]').forEach(link => link.addEventListener('click', () => {
+  root.querySelectorAll('a[href]').forEach(link => link.addEventListener('click', event => {
     if (link.dataset.route && current === 'index.html') {
+      event.preventDefault();
       // Let the existing SPA router handle in-page navigation without a full reload.
       const hash = '#'+link.dataset.route;
       if (location.hash !== hash) location.hash = hash;
