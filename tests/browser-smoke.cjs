@@ -225,6 +225,123 @@ async function main() {
     assert.equal(schemaContract.publicSnapshotIsolated, true, 'Public metadata mutation must not affect internal schema state');
     assert.equal(schemaContract.listed, true);
     assert.match(schemaContract.duplicateSchema, /Duplicate event schema/);
+
+    const moduleManagerContract = await page.evaluate(async () => {
+      const manager = window.TBMC.moduleManager;
+      const core = window.TBMC.engineCore;
+      if (!manager) return { available: false };
+      const trace = [];
+      const lifecycle = (name, extra = {}) => ({
+        validate: async () => { trace.push(name + ':validate'); },
+        init: async () => { trace.push(name + ':init'); },
+        start: async context => {
+          trace.push(name + ':start');
+          if (extra.subscribe) context.subscribe('test.managed.cleanup', () => trace.push(name + ':event'));
+          if (extra.fail) throw new Error('intentional startup probe');
+        },
+        healthCheck: async () => ({ status: 'healthy', detail: name + ' ready' }),
+        stop: async () => { trace.push(name + ':stop'); },
+        destroy: async () => { trace.push(name + ':destroy'); }
+      });
+      const definition = (id, dependencies = [], extra = {}) => ({
+        id, name: id, version: extra.version || '1.0.0', contractVersion: '1.0.0',
+        dependencies, capabilities: ['test.lifecycle'], provides: [], publishes: [], subscribes: [],
+        lifecycle: lifecycle(id, extra)
+      });
+
+      manager.register(definition('test-mm-dependency', [], { subscribe: true }));
+      manager.register(definition('test-mm-consumer', [{ id: 'test-mm-dependency', version: '^1.0.0' }]));
+      const plan = manager.resolveDependencies('test-mm-consumer');
+      const started = await manager.start('test-mm-consumer');
+      const dependencySnapshot = manager.getEngine('test-mm-dependency');
+      dependencySnapshot.dependencies.push('mutated-snapshot');
+      const snapshotIsolated = !manager.getEngine('test-mm-dependency').dependencies.includes('mutated-snapshot');
+      let stopProviderError = '';
+      try { await manager.stop('test-mm-dependency'); } catch (error) { stopProviderError = error.code; }
+      await manager.stop('test-mm-consumer');
+      await manager.stop('test-mm-dependency');
+      core.publish('test.managed.cleanup', {});
+      const cleanupIsolated = !trace.includes('test-mm-dependency:event');
+      const restarted = await manager.restart('test-mm-dependency');
+      await manager.disable('test-mm-dependency');
+      const disabled = manager.getEngine('test-mm-dependency');
+      manager.enable('test-mm-dependency');
+      const reenabled = manager.getEngine('test-mm-dependency');
+
+      manager.register(definition('test-mm-missing', [{ id: 'not-present-engine' }]));
+      let missingError = '';
+      try { manager.validate('test-mm-missing'); } catch (error) { missingError = error.code; }
+
+      manager.register(definition('test-mm-cycle-a', [{ id: 'test-mm-cycle-b' }]));
+      manager.register(definition('test-mm-cycle-b', [{ id: 'test-mm-cycle-a' }]));
+      let cycleError = '';
+      try { manager.resolveDependencies('test-mm-cycle-a'); } catch (error) { cycleError = error.code; }
+
+      manager.register(definition('test-mm-version-provider', [], { version: '1.2.0' }));
+      manager.register(definition('test-mm-version-consumer', [{ id: 'test-mm-version-provider', version: '^2.0.0' }]));
+      let versionError = '';
+      try { manager.validate('test-mm-version-consumer'); } catch (error) { versionError = error.code; }
+
+      manager.register(definition('test-mm-failing', [], { fail: true }));
+      let failureCode = '';
+      try { await manager.start('test-mm-failing'); } catch (error) { failureCode = error.code; }
+      const failedState = manager.getEngine('test-mm-failing').state;
+      manager.register(definition('test-mm-unrelated'));
+      const unrelated = await manager.start('test-mm-unrelated');
+
+      let duplicateError = '';
+      try { manager.register(definition('test-mm-unrelated')); } catch (error) { duplicateError = error.code; }
+      let invalidDefinition = '';
+      try { manager.register({ id: 'Bad ID', name: 'Invalid', version: '1.0.0', contractVersion: '1.0.0', dependencies: [], capabilities: [], provides: [], publishes: [], subscribes: [], lifecycle: lifecycle('bad') }); }
+      catch (error) { invalidDefinition = error.code; }
+
+      return {
+        available: true,
+        plan: plan.order,
+        warnings: plan.warnings,
+        started: started.state,
+        dependencyState: manager.getEngine('test-mm-dependency').state,
+        snapshotIsolated,
+        stopProviderError,
+        cleanupIsolated,
+        restarted: restarted.state,
+        disabled: disabled.state,
+        reenabled: reenabled.state,
+        missingError,
+        cycleError,
+        versionError,
+        failureCode,
+        failedState,
+        unrelatedState: unrelated.state,
+        duplicateError,
+        invalidDefinition,
+        trace
+      };
+    });
+    assert.equal(moduleManagerContract.available, true, 'Module Manager API should be loaded');
+    assert.deepEqual(moduleManagerContract.plan, ['test-mm-dependency', 'test-mm-consumer']);
+    assert.deepEqual(moduleManagerContract.warnings, []);
+    assert.equal(moduleManagerContract.started, 'active');
+    assert.equal(moduleManagerContract.dependencyState, 'active');
+    assert.equal(moduleManagerContract.snapshotIsolated, true);
+    assert.equal(moduleManagerContract.stopProviderError, 'DEPENDENTS_ACTIVE');
+    assert.equal(moduleManagerContract.cleanupIsolated, true, 'Managed subscriptions must be removed on stop');
+    assert.equal(moduleManagerContract.restarted, 'active');
+    assert.equal(moduleManagerContract.disabled, 'disabled');
+    assert.equal(moduleManagerContract.reenabled, 'registered');
+    assert.equal(moduleManagerContract.missingError, 'MISSING_REQUIRED_DEPENDENCY');
+    assert.equal(moduleManagerContract.cycleError, 'DEPENDENCY_CYCLE');
+    assert.equal(moduleManagerContract.versionError, 'VERSION_INCOMPATIBLE');
+    assert.equal(moduleManagerContract.failureCode, 'ENGINE_START_FAILED');
+    assert.equal(moduleManagerContract.failedState, 'failed');
+    assert.equal(moduleManagerContract.unrelatedState, 'active', 'One failed Engine must not block unrelated Engines');
+    assert.equal(moduleManagerContract.duplicateError, 'DUPLICATE_ENGINE_ID');
+    assert.equal(moduleManagerContract.invalidDefinition, 'INVALID_ENGINE_DEFINITION');
+    assert.deepEqual(moduleManagerContract.trace.slice(0, 8), [
+      'test-mm-dependency:validate', 'test-mm-dependency:init', 'test-mm-dependency:start',
+      'test-mm-consumer:validate', 'test-mm-consumer:init', 'test-mm-consumer:start',
+      'test-mm-consumer:stop', 'test-mm-dependency:stop'
+    ]);
     assert.match(await page.locator('#page-profile').innerText(), /Admin authentication is not implemented/i);
     assert.doesNotMatch(await page.locator('body').innerText(), /Data unavailable/i, 'Healthy system must not report unavailable data');
     const configPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
