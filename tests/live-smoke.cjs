@@ -111,6 +111,30 @@ async function main() {
     assert.ok(await auditPage.locator('#workflowList .audit-item').count() > 0, 'Workflow status filter returned no successful runs');
     const auditWidths = await auditPage.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
     assert.ok(auditWidths.doc <= auditWidths.inner + 4 && auditWidths.body <= auditWidths.inner + 4, `Logs & Audit mobile overflow: ${JSON.stringify(auditWidths)}`);
+    for (const [path, heading] of [
+      ['pages/engine-manager.html', 'Engine Manager'],
+      ['pages/platform-status.html', 'Platform Status'],
+      ['pages/visitor-analytics.html', 'Visitor Analytics'],
+      ['pages/users-accounts.html', 'Users & Accounts'],
+      ['pages/activity-history.html', 'Activity History'],
+      ['pages/privacy-data-controls.html', 'Privacy & Data Controls']
+    ]) {
+      const modulePage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      modulePage.on('pageerror', e => pageErrors.push(path + ': ' + e.message));
+      modulePage.on('response', r => {
+        if (r.url().startsWith(new URL(BASE).origin) && r.status() >= 400) badResponses.push(`${r.status()} ${r.url()}`);
+      });
+      await modulePage.goto(new URL(path, BASE).href, { waitUntil: 'networkidle', timeout: 30000 });
+      assert.match(await modulePage.locator('h1').textContent(), new RegExp(heading.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\    assert.deepEqual(pageErrors, [], 'Live pages have uncaught JavaScript errors');'), 'i'));
+      assert.equal(await modulePage.locator('#tbmcUnifiedNavigation').count(), 1, path + ': shared bottom navigation missing');
+      const viewport = await modulePage.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
+      assert.ok(viewport.doc <= viewport.inner + 4 && viewport.body <= viewport.inner + 4, path + ': mobile overflow ' + JSON.stringify(viewport));
+      if (path.includes('engine-manager')) {
+        assert.ok(await modulePage.locator('.engine').count() > 0, 'Engine registry did not render');
+      }
+      await modulePage.close();
+    }
+
     assert.deepEqual(pageErrors, [], 'Live pages have uncaught JavaScript errors');
     assert.deepEqual(badResponses, [], 'Live site pages have HTTP errors');
 
