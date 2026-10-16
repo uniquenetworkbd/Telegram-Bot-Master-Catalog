@@ -4,9 +4,87 @@
   const VERSION = '1.0.0';
   const listeners = new Map();
   const engines = new Map();
+  const eventSchemas = new Map();
   const sessionEventsKey = 'tbmc-local-activity-v1';
   const consentKey = 'tbmc-local-diagnostics-enabled';
   const now = () => new Date().toISOString();
+  const eventTypePattern = /^[a-z][a-z0-9]*(?:[._-][a-z0-9_]+)*$/;
+  const eventPrivacyClasses = new Set(['public', 'internal', 'usage', 'security', 'configuration']);
+
+  function publicEventSchema(schema) {
+    return Object.freeze({
+      type: schema.type,
+      version: schema.version,
+      publisher: schema.publisher,
+      privacy: schema.privacy,
+      consumers: [...schema.consumers]
+    });
+  }
+
+  function registerEventSchema(type, definition) {
+    if (typeof type !== 'string' || !eventTypePattern.test(type)) {
+      throw new TypeError('Event schema requires a valid event type');
+    }
+    if (eventSchemas.has(type)) throw new Error('Duplicate event schema: ' + type);
+    if (!definition || typeof definition !== 'object' || Array.isArray(definition)) {
+      throw new TypeError('Event schema definition must be an object');
+    }
+    const version = definition.version === undefined ? 1 : definition.version;
+    if (!Number.isSafeInteger(version) || version < 1) {
+      throw new TypeError('Event schema version must be a positive integer');
+    }
+    if (typeof definition.publisher !== 'string' || !definition.publisher.trim()) {
+      throw new TypeError('Event schema publisher is required');
+    }
+    if (!eventPrivacyClasses.has(definition.privacy)) {
+      throw new TypeError('Event schema privacy must be public, internal, usage, security, or configuration');
+    }
+    if (!Array.isArray(definition.consumers) ||
+        definition.consumers.some(consumer => typeof consumer !== 'string' || !consumer.trim())) {
+      throw new TypeError('Event schema consumers must be an array of non-empty strings');
+    }
+    if (typeof definition.validate !== 'function') {
+      throw new TypeError('Event schema validate must be a function');
+    }
+    const schema = Object.freeze({
+      type,
+      version,
+      publisher: definition.publisher.trim(),
+      privacy: definition.privacy,
+      consumers: Object.freeze([...new Set(definition.consumers.map(consumer => consumer.trim()))]),
+      validate: definition.validate
+    });
+    eventSchemas.set(type, schema);
+    return publicEventSchema(schema);
+  }
+
+  function validateEvent(type, payload) {
+    const schema = eventSchemas.get(type);
+    if (!schema) return { valid: true, schemaRegistered: false, errors: [] };
+    try {
+      const result = schema.validate(payload);
+      if (result === true) return { valid: true, schemaRegistered: true, version: schema.version, errors: [] };
+      return {
+        valid: false,
+        schemaRegistered: true,
+        version: schema.version,
+        errors: [result === false ? 'INVALID_PAYLOAD' : 'VALIDATOR_MUST_RETURN_BOOLEAN']
+      };
+    } catch (_) {
+      return { valid: false, schemaRegistered: true, version: schema.version, errors: ['VALIDATOR_FAILED'] };
+    }
+  }
+
+  function getEventSchema(type) {
+    const schema = eventSchemas.get(type);
+    return schema ? publicEventSchema(schema) : null;
+  }
+
+  function listEventSchemas() {
+    return [...eventSchemas.values()]
+      .map(publicEventSchema)
+      .sort((a, b) => a.type.localeCompare(b.type));
+  }
   const safeRead = (store, key, fallback) => {
     try { const value = store.getItem(key); return value === null ? fallback : value; }
     catch (_) { return fallback; }
@@ -16,6 +94,10 @@
   };
 
   function publish(type, payload = {}) {
+    const validation = validateEvent(type, payload);
+    if (!validation.valid) {
+      throw new TypeError('Invalid payload for event "' + type + '": ' + validation.errors.join(', '));
+    }
     const event = Object.freeze({ type, at: now(), payload });
     (listeners.get(type) || []).slice().forEach(fn => {
       try { fn(event); } catch (error) { console.error('[TBMC event listener]', error); }
@@ -238,6 +320,10 @@
     version: VERSION,
     publish,
     subscribe,
+    registerEventSchema,
+    validateEvent,
+    getEventSchema,
+    listEventSchemas,
     register,
     listEngines,
     diagnosticsEnabled,
