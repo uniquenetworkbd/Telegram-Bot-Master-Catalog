@@ -17,7 +17,7 @@ async function main() {
     for (let attempt = 1; attempt <= 12; attempt++) {
       try {
         await page.goto(BASE, { waitUntil: 'networkidle', timeout: 20000 });
-        await page.waitForFunction(() => document.querySelector('#csvBadge')?.textContent === 'Loaded', null, { timeout: 10000 });
+        await page.waitForFunction(() => document.querySelector('#homeTotal')?.textContent === '1,000', null, { timeout: 10000 });
         loaded = true;
         break;
       } catch (error) {
