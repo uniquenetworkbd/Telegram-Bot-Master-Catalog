@@ -680,6 +680,31 @@ async function main() {
       }
     }
 
+    // Engine Manager must attach to the same runtime contract and keep controls session-local.
+    const managerPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const managerErrors = [];
+    const managerHttpErrors = [];
+    managerPage.on('pageerror', error => managerErrors.push(error.message));
+    managerPage.on('response', response => {
+      if (response.url().startsWith(BASE) && response.status() >= 400) managerHttpErrors.push(`${response.status()} ${response.url()}`);
+    });
+    await managerPage.goto(BASE + '/pages/engine-manager.html', { waitUntil: 'networkidle' });
+    await managerPage.waitForFunction(() => document.querySelector('#runtime-status')?.textContent === 'ready', null, { timeout: 10000 });
+    await managerPage.waitForFunction(() => document.querySelector('#engines')?.innerText.includes('catalog-query'), null, { timeout: 10000 });
+    assert.match(await managerPage.locator('#runtime-summary').innerText(), /Managed Engines: 10/);
+    assert.match(await managerPage.locator('#bot-module-summary').innerText(), /1 module/);
+    assert.equal(await managerPage.locator('[data-engine-action="restart"][data-engine-id="bot-engine"]').count(), 1);
+    managerPage.once('dialog', dialog => dialog.accept());
+    await managerPage.locator('[data-engine-action="restart"][data-engine-id="bot-engine"]').click();
+    await managerPage.waitForFunction(() => /restart completed for bot-engine/i.test(document.querySelector('#operation-result')?.textContent || ''), null, { timeout: 10000 });
+    assert.equal(await managerPage.evaluate(() => window.TBMC.moduleManager.getEngine('bot-engine')?.state), 'active');
+    const managerWidths = await managerPage.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
+    assert.ok(managerWidths.doc <= managerWidths.inner + 4 && managerWidths.body <= managerWidths.inner + 4,
+      'Engine Manager mobile horizontal overflow: ' + JSON.stringify(managerWidths));
+    assert.deepEqual(managerErrors, [], 'Engine Manager uncaught browser errors');
+    assert.deepEqual(managerHttpErrors, [], 'Engine Manager local HTTP errors');
+    await managerPage.close();
+
     console.log('BROWSER REGRESSION: PASS');
     console.log(`Mobile + desktop | initial load: ${initialLoadMs}ms | 1000 records / 100 categories`);
     console.log('Search/filter/category count/details/history/pagination/export/theme/System/XSS probe: PASS');
