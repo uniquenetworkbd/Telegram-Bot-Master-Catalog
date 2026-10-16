@@ -21,7 +21,8 @@
     }
     return records;
   }
-  async function load(){
+  let loadPromise=null;
+  async function loadFresh(){
     const res=await fetch(DATA_URL,{cache:'no-store'});
     if(!res.ok)throw new Error('CSV returned HTTP '+res.status);
     const records=parseCSV(await res.text());
@@ -37,6 +38,11 @@
     const missing=records.filter(r=>HEADERS.some(h=>!String(r[h]??'').trim()));
     if(missing.length)throw new Error('Catalog validation failed: '+missing.length+' record(s) have empty fields');
     return {records,headers:HEADERS,url:DATA_URL,categoryCounts:categories};
+  }
+  function load(options={}){
+    if(options && options.force===true)loadPromise=null;
+    if(!loadPromise)loadPromise=loadFresh().catch(error=>{loadPromise=null;throw error});
+    return loadPromise;
   }
   function isApi(v){const s=String(v||'').trim().toLowerCase();return s==='yes'||s.startsWith('yes')||s.includes('হ্যাঁ')}
   function categoryCounts(records){return records.reduce((m,b)=>{const k=b['English Category']||'Uncategorized';m[k]=(m[k]||0)+1;return m},{});}
