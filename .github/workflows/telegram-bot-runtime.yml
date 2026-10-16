@@ -45,7 +45,10 @@ jobs:
           mkdir -p .telegram-state
           previous_run="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/telegram-bot-runtime.yml/runs?per_page=20" --jq ".workflow_runs[] | select(.id != $GITHUB_RUN_ID and .conclusion == \"success\") | .id" | head -n 1 || true)"
           if [ -n "$previous_run" ]; then
-            gh run download "$previous_run" --name telegram-offset --dir .telegram-state --repo "$GITHUB_REPOSITORY" || true
+            has_offset="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$previous_run/artifacts" --jq '.artifacts[] | select(.name == "telegram-offset") | .name' | head -n 1 || true)"
+            if [ "$has_offset" = "telegram-offset" ]; then
+              gh run download "$previous_run" --name telegram-offset --dir .telegram-state --repo "$GITHUB_REPOSITORY"
+            fi
           fi
 
       - name: Validate Telegram worker and module contracts
@@ -63,7 +66,7 @@ jobs:
         run: node scripts/telegram/poll-updates.mjs
 
       - name: Persist update offset for the next scheduled run
-        if: ${{ secrets.TELEGRAM_BOT_TOKEN != '' && success() }}
+        if: ${{ env.TELEGRAM_BOT_TOKEN != '' && success() }}
         uses: actions/upload-artifact@v4
         with:
           name: telegram-offset
