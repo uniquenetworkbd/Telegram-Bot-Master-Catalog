@@ -123,7 +123,7 @@ async function main() {
         assert.equal(await modulePage.locator('#releaseCount').textContent(), '2', 'Release count must match the numbered ledger');
         assert.equal(await modulePage.locator('#releaseLatest').textContent(), 'v1.0.1', 'Latest version must match the newest release');
         assert.equal(await modulePage.locator('.release-card').count(), 2, 'Only documented release records should be shown');
-        assert.match(await modulePage.locator('#releaseList').innerText(), /#001 · v1\\.0\\.0[\\s\\S]*#002 · v1\\.0\\.1/);
+        assert.match(await modulePage.locator('#releaseList').innerText(), /#001 · v1\.0\.0[\s\S]*#002 · v1\.0\.1/);
       }
       if (path.includes('live-information')) assert.match(await modulePage.locator('body').innerText(), /Global visitor count[\s\S]*Unavailable/i);
       await modulePage.close();
