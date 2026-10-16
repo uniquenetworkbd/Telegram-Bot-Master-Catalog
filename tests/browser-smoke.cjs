@@ -116,7 +116,9 @@ async function main() {
       modulePage.on('pageerror', error => pageErrors.push(path + ': ' + error.message));
       await modulePage.goto(BASE + '/' + path, { waitUntil: 'networkidle' });
       assert.match(await modulePage.locator('h1').textContent(), new RegExp(heading, 'i'));
-      assert.equal(await modulePage.locator('.system-subnav a').count(), 4);
+      assert.equal(await modulePage.locator('#tbmcUnifiedNavigation').count(), 1, 'Standalone pages must load the shared bottom navigation');
+      await modulePage.locator('.tbmc-bottom-toggle').click();
+      assert.equal(await modulePage.locator('#tbmcSystemLinks a').count(), 4, 'Shared System submenu must be available on standalone pages');
       if (path.includes('version-logs')) assert.match(await modulePage.locator('body').innerText(), /BASELINE SNAPSHOT[\s\S]*System & Theme/i);
       if (path.includes('live-information')) assert.match(await modulePage.locator('body').innerText(), /Global visitor count[\s\S]*Unavailable/i);
       await modulePage.close();
