@@ -1,6 +1,7 @@
 (() => {
   const HEADERS=['index','Bot ID','Category No','Category','English Category','Bot Name','What it does','Free/Low-cost Technology','API Required?','Automation Potential','Monetization Potential','Suggested MVP','Notes'];
-  const DATA_URL='./data/Telegram_Bot_Master_Catalog_1000.csv';
+  const scriptURL=document.currentScript&&document.currentScript.src?document.currentScript.src:new URL('./assets/js/catalog-repository.js',location.href).href;
+  const DATA_URL=new URL('../../data/Telegram_Bot_Master_Catalog_1000.csv',scriptURL).href;
   function parseCSV(text){
     const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(Boolean),records=[];
     for(const line of lines){
