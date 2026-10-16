@@ -277,6 +277,8 @@ async function main() {
       manager.register(definition('test-mm-cycle-b', [{ id: 'test-mm-cycle-a' }]));
       let cycleError = '';
       try { manager.resolveDependencies('test-mm-cycle-a'); } catch (error) { cycleError = error.code; }
+      await manager.unregister('test-mm-cycle-a', { cascade: true });
+      const cycleCleanup = !manager.getEngine('test-mm-cycle-a') && !manager.getEngine('test-mm-cycle-b');
 
       manager.register(definition('test-mm-version-provider', [], { version: '1.2.0' }));
       manager.register(definition('test-mm-version-consumer', [{ id: 'test-mm-version-provider', version: '^2.0.0' }]));
@@ -310,6 +312,7 @@ async function main() {
         reenabled: reenabled.state,
         missingError,
         cycleError,
+        cycleCleanup,
         versionError,
         failureCode,
         failedState,
@@ -332,6 +335,7 @@ async function main() {
     assert.equal(moduleManagerContract.reenabled, 'registered');
     assert.equal(moduleManagerContract.missingError, 'MISSING_REQUIRED_DEPENDENCY');
     assert.equal(moduleManagerContract.cycleError, 'DEPENDENCY_CYCLE');
+    assert.equal(moduleManagerContract.cycleCleanup, true, 'Cascade unregister must terminate safely for a cyclic graph');
     assert.equal(moduleManagerContract.versionError, 'VERSION_INCOMPATIBLE');
     assert.equal(moduleManagerContract.failureCode, 'ENGINE_START_FAILED');
     assert.equal(moduleManagerContract.failedState, 'failed');
