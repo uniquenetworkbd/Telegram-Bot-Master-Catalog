@@ -38,19 +38,21 @@ async function main() {
     await page.waitForFunction(() => location.hash === '#bot/B001-01');
     assert.match(await page.locator('#botDetail').innerText(), /not a verified live Telegram bot/i);
 
+    const widths = await page.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
+    assert.ok(widths.doc <= widths.inner + 4 && widths.body <= widths.inner + 4, `Mobile overflow: ${JSON.stringify(widths)}`);
     assert.equal(await page.locator('#page-system').count(), 0, 'System must be a navigation group, not a separate hub page');
     assert.equal(await page.locator('#systemMenuToggle').count(), 1, 'Primary navigation is missing the System parent item');
     assert.equal(await page.locator('#systemSubmenu a').count(), 4, 'System submenu must be nested directly under System in the primary navigation');
     assert.deepEqual(await page.locator('#systemSubmenu a').allTextContents(), ['System configuration', 'Logs & Audit', 'Version Logs', 'Live information']);
+    await page.setViewportSize({ width: 1280, height: 900 });
     await page.locator('#systemMenuToggle').click();
     assert.equal(await page.locator('#systemMenuToggle').getAttribute('aria-expanded'), 'false');
     assert.equal(await page.locator('#systemSubmenu').isVisible(), false);
     await page.locator('#systemMenuToggle').click();
     assert.equal(await page.locator('#systemSubmenu').isVisible(), true);
+    await page.setViewportSize({ width: 390, height: 844 });
     await page.locator('#moreNavBtn').click();
     assert.equal(await page.locator('#moreMenu .mobile-system-group a').count(), 4, 'Mobile More menu must expose the same four System submenu links');
-    const widths = await page.evaluate(() => ({ inner: innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
-    assert.ok(widths.doc <= widths.inner + 4 && widths.body <= widths.inner + 4, `Mobile overflow: ${JSON.stringify(widths)}`);
     for (const [path, heading] of [
       ['pages/system-configuration.html', 'System configuration'],
       ['pages/version-logs.html', 'Version Logs'],
