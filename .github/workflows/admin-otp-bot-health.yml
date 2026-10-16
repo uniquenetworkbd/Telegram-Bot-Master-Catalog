@@ -1,0 +1,111 @@
+name: Admin and OTP Bot configuration health check
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: admin-otp-bot-health
+  cancel-in-progress: false
+
+jobs:
+  verify-bot-configuration:
+    name: Verify enabled Telegram bot tokens
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      T_OWNER_NAME: ${{ secrets.T_OWNER_NAME }}
+      T_OWNER_USERNAME: ${{ secrets.T_OWNER_USERNAME }}
+      T_OWNER_USER_ID: ${{ secrets.T_OWNER_USER_ID }}
+      T_ADMIN_BOT_ENABLED: ${{ secrets.T_ADMIN_BOT_ENABLED }}
+      T_ADMIN_BOT_USERNAME: ${{ secrets.T_ADMIN_BOT_USERNAME }}
+      T_ADMIN_BOT_USER_ID: ${{ secrets.T_ADMIN_BOT_USER_ID }}
+      T_ADMIN_BOT_TOKEN: ${{ secrets.T_ADMIN_BOT_TOKEN }}
+      T_OTP_BOT_ENABLED: ${{ secrets.T_OTP_BOT_ENABLED }}
+      T_OTP_BOT_USERNAME: ${{ secrets.T_OTP_BOT_USERNAME }}
+      T_OTP_BOT_USER_ID: ${{ secrets.T_OTP_BOT_USER_ID }}
+      T_OTP_BOT_TOKEN: ${{ secrets.T_OTP_BOT_TOKEN }}
+    steps:
+      - name: Validate configuration and check enabled bots with Telegram getMe
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const bots = [
+            {
+              label: 'Admin Bot',
+              enabled: process.env.T_ADMIN_BOT_ENABLED,
+              expectedUsername: process.env.T_ADMIN_BOT_USERNAME,
+              expectedUserId: process.env.T_ADMIN_BOT_USER_ID,
+              token: process.env.T_ADMIN_BOT_TOKEN
+            },
+            {
+              label: 'OTP Bot',
+              enabled: process.env.T_OTP_BOT_ENABLED,
+              expectedUsername: process.env.T_OTP_BOT_USERNAME,
+              expectedUserId: process.env.T_OTP_BOT_USER_ID,
+              token: process.env.T_OTP_BOT_TOKEN
+            }
+          ];
+
+          if (!process.env.T_OWNER_NAME || !process.env.T_OWNER_USERNAME || !process.env.T_OWNER_USER_ID) {
+            console.log('NOTICE: One or more owner metadata secrets are missing; owner metadata is not required for getMe checks.');
+          }
+
+          let failures = 0;
+          for (const bot of bots) {
+            if (bot.enabled !== 'true') {
+              console.log(`SKIP: ${bot.label} is not enabled (expected secret value "true").`);
+              continue;
+            }
+            if (!bot.token) {
+              console.error(`FAIL: ${bot.label} is enabled but its token secret is missing.`);
+              failures++;
+              continue;
+            }
+            if (!/^\d{5,20}:[A-Za-z0-9_-]{20,}$/.test(bot.token)) {
+              console.error(`FAIL: ${bot.label} token format is invalid; token value was not printed.`);
+              failures++;
+              continue;
+            }
+
+            let response;
+            try {
+              response = await fetch('https://api.telegram.org/bot' + bot.token + '/getMe', {
+                signal: AbortSignal.timeout(15000)
+              });
+            } catch {
+              console.error(`FAIL: ${bot.label} Telegram API request failed; secret values were not printed.`);
+              failures++;
+              continue;
+            }
+
+            let payload;
+            try { payload = await response.json(); } catch { payload = null; }
+            if (!response.ok || !payload || payload.ok !== true || !payload.result) {
+              console.error(`FAIL: ${bot.label} getMe check failed; token and request URL were not printed.`);
+              failures++;
+              continue;
+            }
+
+            const actualUsername = String(payload.result.username || '');
+            const actualId = String(payload.result.id || '');
+            if (bot.expectedUsername && bot.expectedUsername.replace(/^@/, '') !== actualUsername) {
+              console.error(`FAIL: ${bot.label} username does not match T_* configuration.`);
+              failures++;
+              continue;
+            }
+            if (bot.expectedUserId && bot.expectedUserId !== actualId) {
+              console.error(`FAIL: ${bot.label} Telegram user ID does not match T_* configuration.`);
+              failures++;
+              continue;
+            }
+            console.log(`PASS: ${bot.label} token accepted by Telegram; username and ID checks passed where configured.`);
+          }
+
+          if (failures > 0) process.exitCode = 1;
+          NODE
