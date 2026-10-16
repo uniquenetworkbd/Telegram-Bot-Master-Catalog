@@ -68,7 +68,7 @@ The catalog research was checked against Telegram's official Bot Platform docume
 - Scheduled Telegram polling workflow: [Telegram Bot Runtime](.github/workflows/telegram-bot-runtime.yml).
 - Node.js Bot Module handler and CSV parser: `scripts/telegram/`; contract tests: `tests/telegram-module-contract.mjs`.
 
-The browser only manages module contracts and never calls Telegram with a bot token. The manual smoke workflow requires `TELEGRAM_BOT_TOKEN` as a GitHub Actions secret and `TELEGRAM_CHAT_ID` as an Actions variable. The scheduled poller is best-effort (five-minute cadence) and stores only its update offset in a GitHub Actions artifact; it is not a real-time webhook or production-grade always-on server. See the architecture document for the exact boundary.
+The browser only manages module contracts and never calls Telegram with a bot token. The manual smoke workflow requires `TELEGRAM_BOT_TOKEN` as a GitHub Actions secret and `TELEGRAM_CHAT_ID` as an Actions variable. The scheduled poller requires `TELEGRAM_BOT_ENABLED=true` plus the `TELEGRAM_BOT_TOKEN` secret, is best-effort (five-minute cadence), and stores only its update offset in a GitHub Actions artifact; it is not a real-time webhook or production-grade always-on server. See the architecture document for the exact boundary.
 
 ## Validation and deployment
 
