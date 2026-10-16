@@ -1,7 +1,7 @@
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const chatId = process.env.TELEGRAM_CHAT_ID;
 
-if (!token || !/^\d{5,20}(?::[A-Za-z0-9_-]{20,})?$/.test(token)) {
+if (!token || !/^\d{5,20}:[A-Za-z0-9_-]{20,}$/.test(token)) {
   throw new Error('TELEGRAM_BOT_TOKEN is missing or malformed; configure it as a GitHub Actions secret.');
 }
 if (!chatId || !/^-?\d{1,20}$/.test(chatId)) {
