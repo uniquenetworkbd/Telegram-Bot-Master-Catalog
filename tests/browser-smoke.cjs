@@ -275,6 +275,33 @@ async function main() {
     assert.deepEqual(searchEngineContract.facets, { categories: ['Network', 'Ops'], automation: ['High', 'Medium'], apiRequired: ['yes', 'no'] });
     assert.equal(searchEngineContract.unchanged, true, 'Search filters must not mutate the source dataset');
 
+    const historyEngineContract = await page.evaluate(() => {
+      const history = window.TBMC.historyEngine;
+      const routes = ['home', 'dashboard', 'catalog', 'bot', 'profile'];
+      if (!history) return { available: false };
+      const encoded = history.buildHash('bot', 'bot id/42', routes);
+      const parsed = history.parseHash(encoded, routes);
+      const fallback = history.parseHash('#unknown-route', routes);
+      const current = history.parseLocation(routes);
+      const snapshot = history.snapshot(routes);
+      return {
+        available: true,
+        encoded,
+        parsed,
+        fallback,
+        currentRouteMatches: current[0] === window.TBMC.appShell.state.route,
+        snapshotRouteMatches: snapshot.route === current[0],
+        snapshotHasHistoryLength: Number.isInteger(snapshot.historyLength) && snapshot.historyLength > 0
+      };
+    });
+    assert.equal(historyEngineContract.available, true);
+    assert.equal(historyEngineContract.encoded, '#bot/bot%20id%2F42');
+    assert.deepEqual(historyEngineContract.parsed, ['bot', 'bot id/42']);
+    assert.deepEqual(historyEngineContract.fallback, ['home', null]);
+    assert.equal(historyEngineContract.currentRouteMatches, true);
+    assert.equal(historyEngineContract.snapshotRouteMatches, true);
+    assert.equal(historyEngineContract.snapshotHasHistoryLength, true);
+
     const mainEngineContract = await page.evaluate(async () => {
       const main = window.TBMC.mainEngine;
       const manager = window.TBMC.moduleManager;
@@ -296,6 +323,8 @@ async function main() {
         catalogHealth: manager.getEngine('catalog-engine')?.health.status,
         searchState: manager.getEngine('search-engine')?.state,
         searchHealth: manager.getEngine('search-engine')?.health.status,
+        historyState: manager.getEngine('history-engine')?.state,
+        historyHealth: manager.getEngine('history-engine')?.health.status,
         loadPromiseCached: datasetA === datasetB,
         runtimeReadySchema: window.TBMC.engineCore.getEventSchema('runtime.ready') !== null,
         catalogLoadedSchema: window.TBMC.engineCore.getEventSchema('catalog.loaded') !== null,
@@ -313,10 +342,12 @@ async function main() {
     assert.equal(mainEngineContract.catalogHealth, 'healthy');
     assert.equal(mainEngineContract.searchState, 'active');
     assert.equal(mainEngineContract.searchHealth, 'healthy');
+    assert.equal(mainEngineContract.historyState, 'active');
+    assert.equal(mainEngineContract.historyHealth, 'healthy');
     assert.equal(mainEngineContract.loadPromiseCached, true, 'Storage and Catalog must share the validated dataset load');
     assert.equal(mainEngineContract.runtimeReadySchema, true);
     assert.equal(mainEngineContract.catalogLoadedSchema, true);
-    assert.equal(mainEngineContract.engineCount, 3);
+    assert.equal(mainEngineContract.engineCount, 4);
 
     const moduleManagerContract = await page.evaluate(async () => {
       const manager = window.TBMC.moduleManager;
