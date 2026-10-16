@@ -41,7 +41,7 @@ You need a Cloudflare account with Workers and D1 enabled, and a Telegram bot wh
    - `OTP_PEPPER` — independent high-entropy random secret used to hash OTPs.
 6. Set the Telegram webhook URL to `https://YOUR_AUTH_API_ORIGIN/api/telegram/webhook` and set Telegram's `secret_token` to the same value as `TELEGRAM_WEBHOOK_SECRET`. Verify webhook status and confirm a real update is accepted.
 7. Set `assets/js/auth-config.js` `apiBaseUrl` to the Worker origin. If the UI and Worker are on different sites, third-party-cookie restrictions may block persistent cookies. Prefer hosting the frontend and API on the same site/custom domain; otherwise test real Android browsers and cookie policy before production.
-8. Update the frontend CSP `connect-src` to the exact API origin (avoid a broad `https:` rule for production). The current auth page policy allows HTTPS only as an interim configuration template.
+8. The auth pages currently allow `connect-src 'self'` only. Route the Worker API through the same origin (recommended), or deliberately add only the exact trusted API origin to each auth page's CSP and test CORS. Do not use a broad `https:` source in production.
 9. Run automated checks, then real Telegram registration, login, wrong-code, expiry, refresh, idle return, logout, suspended-user and browser-cookie tests.
 
 ## API contract
