@@ -175,6 +175,10 @@ async function main() {
         consumers: ['test-runner', 'test-runner'],
         validate: payload => Boolean(payload && payload.ok === true)
       });
+      const metadataBeforeMutation = {
+        ...metadata,
+        consumers: [...metadata.consumers]
+      };
       metadata.consumers.push('mutated-public-snapshot');
       const safeSnapshot = core.getEventSchema('test.schema-probe');
       const valid = core.validateEvent('test.schema-probe', { ok: true });
@@ -193,7 +197,7 @@ async function main() {
         });
       } catch (error) { duplicateSchema = error.message; }
       return {
-        metadata,
+        metadata: metadataBeforeMutation,
         valid,
         invalid,
         unknown,
