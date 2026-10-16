@@ -89,6 +89,35 @@
     return error;
   }
 
+  function ensureHistoryEngine() {
+    if (manager.getEngine('history-engine')) return;
+    manager.register({
+      id: 'history-engine',
+      name: 'History Engine',
+      version: VERSION,
+      contractVersion: VERSION,
+      description: 'Owns URL hash parsing, safe route encoding and browser history pushState integration.',
+      dependencies: [{ id: 'main-engine', version: '^1.0.0' }],
+      capabilities: ['route parsing', 'safe bot detail URLs', 'browser back/forward support'],
+      provides: ['navigation.history'],
+      publishes: ['navigation.changed'],
+      subscribes: [],
+      lifecycle: {
+        validate: () => Boolean(window.TBMC.historyEngine &&
+          typeof window.TBMC.historyEngine.parseLocation === 'function' &&
+          typeof window.TBMC.historyEngine.push === 'function'),
+        init: async () => {},
+        start: async () => {},
+        healthCheck: async () => Boolean(window.TBMC.historyEngine &&
+          typeof window.TBMC.historyEngine.snapshot === 'function')
+          ? { status: 'healthy', detail: 'Browser route history API is available' }
+          : { status: 'unhealthy', detail: 'History Engine API is unavailable' },
+        stop: async () => {},
+        destroy: async () => {}
+      }
+    });
+  }
+
   function ensureSearchEngine() {
     if (manager.getEngine('search-engine')) return;
     manager.register({
@@ -162,9 +191,11 @@
 
     state.bootstrapPromise = (async () => {
       ensureStorageEngine();
+      ensureHistoryEngine();
       ensureSearchEngine();
       ensureCatalogEngine();
       await manager.start('catalog-engine');
+      await manager.start('history-engine');
       const storage = manager.getEngine('storage-engine');
       const catalog = manager.getEngine('catalog-engine');
       if (!storage || !catalog || !['active', 'degraded'].includes(storage.state) ||
@@ -202,7 +233,7 @@
     core.publish('runtime.shutdown_started', { version: VERSION });
     state.shutdownPromise = (async () => {
       const failures = [];
-      for (const id of ['catalog-engine', 'storage-engine']) {
+      for (const id of ['history-engine', 'catalog-engine', 'search-engine', 'storage-engine']) {
         const engine = manager.getEngine(id);
         if (!engine || !['active', 'degraded', 'failed', 'initialized', 'starting', 'blocked'].includes(engine.state)) continue;
         try { await manager.stop(id); }
