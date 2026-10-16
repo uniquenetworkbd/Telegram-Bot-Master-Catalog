@@ -1,13 +1,64 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10172a"><title>Version Logs · Telegram Bot Master Catalog</title><link rel="stylesheet" href="../assets/css/app.css"><style>
-.standalone{max-width:1180px;margin:0 auto;padding:26px 16px 42px}.release-intro{margin:18px 0}.release-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.release-card{border:1px solid var(--line);border-radius:16px;background:var(--surface2);overflow:hidden;min-width:0}.release-card summary{list-style:none;cursor:pointer;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:12px}.release-card summary::-webkit-details-marker{display:none}.release-card summary:after{content:"＋";font-size:18px;color:var(--accent)}.release-card[open] summary:after{content:"−"}.release-card summary:hover{background:color-mix(in srgb,var(--accent) 7%,transparent)}.release-title{min-width:0}.release-title h2{font-size:18px;margin:0 0 5px;overflow-wrap:anywhere}.release-title p{font-size:11px;color:var(--muted);margin:0}.release-body{padding:0 18px 18px;border-top:1px solid var(--line)}.release-section{margin-top:15px}.release-section h3{font-size:11px;letter-spacing:1px;margin:0 0 7px}.release-section ul{padding-left:19px;margin:0;color:var(--muted);font-size:12px}.release-section li{margin:5px 0}.release-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}.release-badge{display:inline-flex;border:1px solid var(--line);border-radius:99px;padding:5px 9px;font-size:10px;color:var(--muted)}.release-note{margin-top:15px}.release-card.current{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}@media(max-width:760px){.release-list{grid-template-columns:1fr}.release-card summary{padding:15px}.release-body{padding:0 15px 15px}}
-</style></head><body>
-
-<main class="standalone"><div class="pagehead"><div><div class="eyebrow">Release notes</div><h1>Version Logs</h1><p>Version-by-version platform change records. Select a version card to view its CHANGES, FEATURES and BUG FIXES.</p></div><span class="tag green">RELEASE NOTES</span></div>
-<div class="grid stats"><div class="card"><div class="statlabel">Documented versions</div><strong class="statvalue" id="releaseCount">3</strong><div class="statfoot">Release-note entries in this ledger</div></div><div class="card"><div class="statlabel">Latest version</div><strong class="statvalue" style="font-size:22px" id="releaseLatest">v8.2.4</strong><div class="statfoot">Latest recorded platform update</div></div><div class="card"><div class="statlabel">Record type</div><strong class="statvalue" style="font-size:22px">Release notes</strong><div class="statfoot">Not a commit or workflow feed</div></div><div class="card"><div class="statlabel">Update policy</div><strong class="statvalue" style="font-size:22px">Per release</strong><div class="statfoot">Summarize actual changes made</div></div></div>
-<p class="notice release-intro">This page is intentionally separate from GitHub-native Logs &amp; Audit. It shows human-readable release notes, not repository commits or workflow runs. Historical entries retain the dates supplied in the project brief; where original release details were not supplied, that limitation is stated instead of inventing history.</p>
-<div id="releaseList" class="release-list">
-<details class="release-card"><summary><div class="release-title"><h2>v8.2.4</h2><p>October 16, 2026 · Current update</p></div><span class="tag green">CURRENT</span></summary><div class="release-body"><div class="release-section"><h3>CHANGES</h3><ul><li>Added a consistent Main navigation button and expandable navigation panel to all four System pages.</li><li>Standardized access to Home, Dashboard, Catalog, Bot Details, Admin Profile and all System submenu pages.</li><li>Separated release-note history from GitHub commit/workflow observability.</li></ul></div><div class="release-section"><h3>FEATURES</h3><ul><li>Version cards open on click and show structured release details.</li><li>Every release entry includes dedicated CHANGES, FEATURES and BUG FIXES sections.</li><li>Responsive navigation and release cards for mobile and desktop.</li></ul></div><div class="release-section"><h3>BUG FIXES</h3><ul><li>Fixed missing main navigation on standalone System pages.</li><li>Removed commit-derived version cards and GitHub history from Version Logs.</li></ul></div></div></details>
-<details class="release-card"><summary><div class="release-title"><h2>v1.1.1</h2><p>December 31, 2018</p></div><span class="release-badge">HISTORICAL ENTRY</span></summary><div class="release-body"><div class="release-section"><h3>CHANGES</h3><ul><li>Original release change details were not included in the supplied project record.</li></ul></div><div class="release-section"><h3>FEATURES</h3><ul><li>Original feature details were not included in the supplied project record.</li></ul></div><div class="release-section"><h3>BUG FIXES</h3><ul><li>Original bug-fix details were not included in the supplied project record.</li></ul></div></div></details>
-<details class="release-card"><summary><div class="release-title"><h2>v1.0.0</h2><p>June 14, 2018</p></div><span class="release-badge">HISTORICAL ENTRY</span></summary><div class="release-body"><div class="release-section"><h3>CHANGES</h3><ul><li>Original release change details were not included in the supplied project record.</li></ul></div><div class="release-section"><h3>FEATURES</h3><ul><li>Original feature details were not included in the supplied project record.</li></ul></div><div class="release-section"><h3>BUG FIXES</h3><ul><li>Original bug-fix details were not included in the supplied project record.</li></ul></div></div></details>
-</div><div class="notice release-note">Release-note rule going forward: every platform update made through this workflow must be recorded under its version with the actual CHANGES, FEATURES and BUG FIXES. Do not populate this page from raw GitHub commits; those remain in Logs &amp; Audit.</div></main>
-<script src="../assets/js/global-bottom-nav.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10172a">
+<title>Version Logs · Telegram Bot Master Catalog</title>
+<link rel="stylesheet" href="../assets/css/app.css">
+<style>
+.standalone{max-width:1180px;margin:0 auto;padding:26px 16px 42px}.release-intro{margin:18px 0}.release-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.release-card{border:1px solid var(--line);border-radius:16px;background:var(--surface2);overflow:hidden;min-width:0}.release-card summary{list-style:none;cursor:pointer;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:12px}.release-card summary::-webkit-details-marker{display:none}.release-card summary:after{content:"＋";font-size:18px;color:var(--accent)}.release-card[open] summary:after{content:"−"}.release-card summary:hover{background:color-mix(in srgb,var(--accent) 7%,transparent)}.release-title{min-width:0}.release-title h2{font-size:18px;margin:0 0 5px;overflow-wrap:anywhere}.release-title p{font-size:11px;color:var(--muted);margin:0}.release-body{padding:0 18px 18px;border-top:1px solid var(--line)}.release-section{margin-top:15px}.release-section h3{font-size:11px;letter-spacing:1px;margin:0 0 7px}.release-section ul{padding-left:19px;margin:0;color:var(--muted);font-size:12px}.release-section li{margin:5px 0}.release-badge{display:inline-flex;border:1px solid var(--line);border-radius:99px;padding:5px 9px;font-size:10px;color:var(--muted);white-space:nowrap}.release-note{margin-top:15px}.release-card.current{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}@media(max-width:760px){.release-list{grid-template-columns:1fr}.release-card summary{padding:15px}.release-body{padding:0 15px 15px}}
+</style>
+</head>
+<body>
+<main class="standalone">
+  <div class="pagehead"><div><div class="eyebrow">Release notes</div><h1>Version Logs</h1><p>Serial-numbered platform release records. Open a release to review its verified CHANGES, FEATURES and BUG FIXES.</p></div><span class="tag green">RELEASE NOTES</span></div>
+  <div class="grid stats">
+    <div class="card"><div class="statlabel">Documented releases</div><strong class="statvalue" id="releaseCount">2</strong><div class="statfoot">Numbered records in this release ledger</div></div>
+    <div class="card"><div class="statlabel">Latest version</div><strong class="statvalue" style="font-size:22px" id="releaseLatest">v1.0.1</strong><div class="statfoot">Latest documented release</div></div>
+    <div class="card"><div class="statlabel">Record type</div><strong class="statvalue" style="font-size:22px">Release notes</strong><div class="statfoot">Separate from commit and workflow logs</div></div>
+    <div class="card"><div class="statlabel">Serial policy</div><strong class="statvalue" style="font-size:22px">#001 → #002</strong><div class="statfoot">Increment for each documented release</div></div>
+  </div>
+  <p class="notice release-intro">Audit correction: unsupported historical version labels and dates have been removed because the repository evidence does not establish them. Entries below are ordered from the earliest documented release to the latest. Future entries must be added only after the corresponding change has actually been made; Git commits remain in Logs &amp; Audit.</p>
+  <div id="releaseList" class="release-list">
+    <details class="release-card">
+      <summary><div class="release-title"><h2>#001 · v1.0.0</h2><p>October 16, 2026 · Shared navigation release</p></div><span class="release-badge">RELEASE #001</span></summary>
+      <div class="release-body">
+        <div class="release-section"><h3>CHANGES</h3><ul>
+          <li>Introduced a shared bottom-positioned Main navigation module for platform pages.</li>
+          <li>Grouped System configuration, Logs &amp; Audit, Version Logs and Live information under the System submenu.</li>
+          <li>Kept human-readable release notes separate from GitHub commit/workflow history.</li>
+        </ul></div>
+        <div class="release-section"><h3>FEATURES</h3><ul>
+          <li>Expandable Main navigation panel with links to the platform's primary sections.</li>
+          <li>Collapsible System submenu shared by standalone System pages.</li>
+          <li>Responsive release-card layout using the platform's existing CSS theme.</li>
+        </ul></div>
+        <div class="release-section"><h3>BUG FIXES</h3><ul>
+          <li>Removed the former duplicate/legacy navigation from the updated pages.</li>
+        </ul></div>
+      </div>
+    </details>
+    <details class="release-card current" open>
+      <summary><div class="release-title"><h2>#002 · v1.0.1</h2><p>October 16, 2026 · Version Logs correction</p></div><span class="tag green">CURRENT</span></summary>
+      <div class="release-body">
+        <div class="release-section"><h3>CHANGES</h3><ul>
+          <li>Replaced the unsupported v8.2.4 label and undemonstrated 2018 historical entries with a sequential release ledger.</li>
+          <li>Added serial numbers #001 and #002 and ordered entries from earliest to latest.</li>
+          <li>Updated the summary count and latest-version label to match the entries shown.</li>
+        </ul></div>
+        <div class="release-section"><h3>FEATURES</h3><ul>
+          <li>Each release has separate CHANGES, FEATURES and BUG FIXES sections.</li>
+          <li>The current release is visibly identified, and cards can be expanded or collapsed.</li>
+          <li>The page states the evidence rule for future release notes.</li>
+        </ul></div>
+        <div class="release-section"><h3>BUG FIXES</h3><ul>
+          <li>Removed unsupported version/date claims instead of presenting them as verified history.</li>
+          <li>Corrected the release count and latest-version summary to match the actual ledger.</li>
+        </ul></div>
+      </div>
+    </details>
+  </div>
+  <div class="notice release-note"><strong>Release rule:</strong> after each real platform update, add the next serial number and version, record only changes/features/fixes actually completed, and verify the page before marking the release current. Do not invent past releases, dates, test results or version numbers.</div>
+</main>
+<script src="../assets/js/global-bottom-nav.js"></script>
+</body>
+</html>
