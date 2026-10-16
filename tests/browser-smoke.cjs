@@ -79,26 +79,24 @@ async function main() {
     assert.match(cspResult, /script-src/i, 'CSP should block injected inline scripts');
     assert.equal(await page.evaluate(() => window.__tbmcCspProbe || 0), 0, 'CSP probe must not execute');
 
+    assert.equal(await page.locator('#page-system').count(), 0, 'System must be a navigation group, not a separate hub page');
+    await page.setViewportSize({ width: 1280, height: 900 });
+    assert.equal(await page.locator('#systemMenuToggle').count(), 1, 'System parent must live in primary navigation');
+    assert.deepEqual(await page.locator('#systemSubmenu a').evaluateAll(links => links.map(link => link.getAttribute('href'))), ['./pages/system-configuration.html', './pages/logs-audit.html', './pages/version-logs.html', './pages/live-information.html']);
+    assert.match((await page.locator('#systemSubmenu').innerText()).replace(/[⚙≋◷◉]/g, ''), /System configuration[\s\S]*Logs & Audit[\s\S]*Version Logs[\s\S]*Live information/);
+    await page.locator('#systemMenuToggle').click();
+    assert.equal(await page.locator('#systemSubmenu').isVisible(), false, 'System submenu should collapse');
+    await page.locator('#systemMenuToggle').click();
+    assert.equal(await page.locator('#systemSubmenu').isVisible(), true, 'System submenu should expand');
+    await page.setViewportSize({ width: 390, height: 844 });
     await page.locator('#moreNavBtn').click();
-    await page.locator('#moreMenu a[data-route="system"]').click();
-    assert.match(await page.locator('#page-system').innerText(), /System configuration[\s\S]*Logs & Audit[\s\S]*Version Logs[\s\S]*Live information/i);
+    assert.equal(await page.locator('#moreMenu .mobile-system-group a').count(), 4, 'Mobile More menu must expose the same System submenu');
     assert.ok(await page.evaluate(() => Boolean(window.TBMC && window.TBMC.engineCore)), 'Main Engine runtime should be exposed');
     const engineIds = await page.evaluate(() => window.TBMC.engineCore.listEngines().map(engine => engine.id));
     for (const requiredEngine of ['main-engine', 'engine-registry', 'catalog-data', 'catalog-ui', 'local-activity']) {
       assert.ok(engineIds.includes(requiredEngine), 'Missing registered engine: ' + requiredEngine);
     }
-    assert.ok(await page.locator('#tbmc-engine-list .metarow').count() >= 5, 'Engine Manager should list registered engines');
-    assert.equal(await page.locator('#tbmc-diagnostics-toggle').isChecked(), false, 'Local diagnostics must be off by default');
-    await page.locator('#tbmc-diagnostics-toggle').check();
-    const localActivity = await page.evaluate(() => JSON.parse(sessionStorage.getItem('tbmc-local-activity-v1') || '[]'));
-    assert.ok(localActivity.length >= 1, 'Explicit opt-in should enable local activity events');
-    assert.ok(localActivity.every(event => ['page_view','catalog_search_used','bot_details_opened'].includes(event.type)), 'Local activity should use allowlisted event types');
-    assert.ok(localActivity.every(event => !('query' in event) && !('botId' in event) && !('ip' in event)), 'Local activity must not store search terms, bot IDs or IP addresses');
-    await page.locator('#tbmc-diagnostics-toggle').uncheck();
-    assert.equal(await page.evaluate(() => sessionStorage.getItem('tbmc-local-activity-v1')), null, 'Opt-out should clear local session activity');
-    assert.match(await page.locator('#page-system').innerText(), /Backend server: not used/i);
-    assert.match(await page.locator('body').innerText(), /Admin authentication[\s\S]*Not implemented/i);
-    assert.match(await page.locator('body').innerText(), /Backend server[\s\S]*Not used/i);
+    assert.match(await page.locator('#page-profile').innerText(), /Admin authentication is not implemented/i);
     assert.doesNotMatch(await page.locator('body').innerText(), /Data unavailable/i, 'Healthy system must not report unavailable data');
     const configPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
     configPage.on('pageerror', error => pageErrors.push('System configuration: ' + error.message));

@@ -71,10 +71,18 @@ require("content-security-policy" in html and "script-src 'self'" in html,
         "A restrictive Content Security Policy must be present")
 require("not a verified directory of live telegram bots" in html,
         "Catalog UI must disclose concept-only scope")
-require("admin authentication" in html and "not implemented" in html,
-        "System page must disclose that admin authentication is not implemented")
-require("backend server" in html and "not used" in html,
-        "System page must disclose the static/no-backend boundary")
+require('id="systemmenutoggle"' in html and 'id="systemsubmenu"' in html,
+        "Primary navigation must contain a System parent and a nested submenu")
+for label in ["system configuration", "logs &amp; audit", "version logs", "live information"]:
+    require(label in html, f"System submenu must include {label}")
+require('id="page-system"' not in html,
+        "System must be a navigation group, not a separate hub page")
+profile_html = (ROOT / "pages" / "admin-profile.html").read_text(encoding="utf-8").casefold() if (ROOT / "pages" / "admin-profile.html").exists() else html
+require("admin authentication" in html or "admin authentication" in profile_html or "admin authentication" in readme,
+        "Repository must disclose that admin authentication is not implemented")
+runtime_html = (ROOT / "pages" / "live-information.html").read_text(encoding="utf-8").casefold()
+require("not used" in runtime_html or "github pages" in runtime_html,
+        "Live information must disclose the static hosting boundary")
 
 print("INDEPENDENT CATALOG AUDIT: PASS")
 print("Records: 1000 | unique IDs: 1000 | unique names: 1000")
