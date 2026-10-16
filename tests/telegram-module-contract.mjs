@@ -4,7 +4,12 @@ import { parseCsv } from '../scripts/telegram/csv.mjs';
 import { handleCatalogQuery } from '../scripts/telegram/bot-modules/catalog-query.mjs';
 
 test('CSV parser handles quoted commas, escaped quotes and multiline fields', () => {
-  const records = parseCsv('\uFEFFBot ID,Bot Name,English Category,Notes\r\nB001,"Alpha, Helper",Utilities,"Says ""hello""\nand works"\r\n');
+  const csv = [
+    '\uFEFFBot ID,Bot Name,English Category,Notes',
+    'B001,"Alpha, Helper",Utilities,"Says ""hello""',
+    'and works"'
+  ].join('\r\n') + '\r\n';
+  const records = parseCsv(csv);
   assert.equal(records.length, 1);
   assert.equal(records[0]['Bot Name'], 'Alpha, Helper');
   assert.equal(records[0].Notes, 'Says "hello"\nand works');
@@ -23,7 +28,7 @@ test('catalog module answers start/help and limits search results to five', asyn
   }));
   const start = await handleCatalogQuery({ message: { chat: { id: 123 }, text: '/start' } }, records);
   assert.equal(start.chat_id, 123);
-  assert.match(start.text, //search/);
+  assert.ok(start.text.includes('/search'));
 
   const usage = await handleCatalogQuery({ message: { chat: { id: 123 }, text: '/search' } }, records);
   assert.equal(usage.text, 'Usage: /search <keyword>');
