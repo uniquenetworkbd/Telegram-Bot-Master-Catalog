@@ -15,6 +15,7 @@ on:
       - 'assets/js/version-logs.js'
       - 'assets/js/live-information.js'
       - 'assets/js/global-bottom-nav.js'
+      - 'assets/js/module-manager.js'
       - 'index.html'
       - 'assets/css/app.css'
       - 'docs/architecture/GITHUB-NATIVE-SERVER-SIDE-ARCHITECTURE-v1.0.md'
@@ -54,6 +55,7 @@ jobs:
       - name: Validate runtime scripts
         run: |
           node --check assets/js/engine-core.js
+          node --check assets/js/module-manager.js
           node --check assets/js/logs-audit.js
           node --check assets/js/system-configuration.js
           node --check assets/js/version-logs.js
