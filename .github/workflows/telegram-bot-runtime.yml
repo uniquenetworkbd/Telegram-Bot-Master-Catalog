@@ -18,13 +18,15 @@ jobs:
     name: Poll Telegram updates and run bot modules
     runs-on: ubuntu-latest
     timeout-minutes: 4
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
     steps:
       - name: Skip until bot token is configured
-        if: ${{ secrets.TELEGRAM_BOT_TOKEN == '' }}
+        if: ${{ env.TELEGRAM_BOT_TOKEN == '' }}
         run: echo "::notice::Configure TELEGRAM_BOT_TOKEN in repository Actions secrets to enable Telegram polling."
 
       - name: Check out repository
-        if: ${{ secrets.TELEGRAM_BOT_TOKEN != '' }}
+        if: ${{ env.TELEGRAM_BOT_TOKEN != '' }}
         uses: actions/checkout@v4
 
       - name: Set up Node.js
@@ -57,7 +59,6 @@ jobs:
       - name: Poll Telegram and dispatch supported bot modules
         if: ${{ secrets.TELEGRAM_BOT_TOKEN != '' }}
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           GITHUB_WORKSPACE: ${{ github.workspace }}
         run: node scripts/telegram/poll-updates.mjs
 
