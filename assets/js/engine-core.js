@@ -266,7 +266,7 @@
   }
 
   const eventIdPattern = /^[a-z][a-z0-9.-]{1,63}$/;
-  const eventVersionPattern = /^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$/;
+  const eventVersionPattern = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
   const knownRoutes = new Set(['home', 'dashboard', 'catalog', 'bot', 'profile', 'system']);
   const validObject = payload => Boolean(payload && typeof payload === 'object' && !Array.isArray(payload));
   const validId = value => typeof value === 'string' && eventIdPattern.test(value);
