@@ -160,25 +160,21 @@
   }
 
   function diagnosticsEnabled() {
-    return safeRead(localStorage, consentKey, 'false') === 'true';
+    return window.TBMC && window.TBMC.loggingEngine
+      ? window.TBMC.loggingEngine.isEnabled()
+      : safeRead(localStorage, consentKey, 'false') === 'true';
   }
 
   function readEvents() {
-    try {
-      const parsed = JSON.parse(safeRead(sessionStorage, sessionEventsKey, '[]'));
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (_) { return []; }
+    return window.TBMC && window.TBMC.loggingEngine
+      ? window.TBMC.loggingEngine.readEvents()
+      : [];
   }
 
   function recordLocal(type, route) {
-    if (!diagnosticsEnabled()) return;
-    const allowed = new Set(['page_view', 'catalog_search_used', 'bot_details_opened']);
-    if (!allowed.has(type)) return;
-    const events = readEvents();
-    events.push({ type, at: now(), route: ['home','dashboard','catalog','bot','profile','system'].includes(route) ? route : 'other' });
-    safeWrite(sessionStorage, sessionEventsKey, JSON.stringify(events.slice(-100)));
-    publish('activity.recorded', { type, route });
-    renderManager();
+    return window.TBMC && window.TBMC.loggingEngine
+      ? window.TBMC.loggingEngine.recordLocal(type, route)
+      : false;
   }
 
   function currentRoute() {
