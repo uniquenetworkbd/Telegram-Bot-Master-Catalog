@@ -127,7 +127,8 @@
   }
   if (core) {
     ['engine.registered', 'engine.state_changed', 'engine.health_changed', 'engine.enabled',
-      'engine.disabled', 'engine.unregistered', 'engine.start_failed', 'engine.stop_failed']
+      'engine.disabled', 'engine.unregistered', 'engine.start_failed', 'engine.stop_failed',
+      'runtime.starting', 'runtime.ready', 'runtime.failed', 'runtime.shutdown_complete']
       .forEach(type => core.subscribe(type, render));
   }
   document.addEventListener('DOMContentLoaded', render);
