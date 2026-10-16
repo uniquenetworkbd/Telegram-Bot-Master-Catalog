@@ -302,6 +302,39 @@ async function main() {
     assert.equal(historyEngineContract.snapshotRouteMatches, true);
     assert.equal(historyEngineContract.snapshotHasHistoryLength, true);
 
+    const analyticsEngineContract = await page.evaluate(() => {
+      const analytics = window.TBMC.analyticsEngine;
+      const sample = [
+        { 'Bot Name': 'Zeta', 'English Category': 'Ops', 'API Required?': 'Yes', 'Automation Potential': 'High' },
+        { 'Bot Name': 'Alpha', 'English Category': 'Ops', 'API Required?': 'No', 'Automation Potential': 'Medium' },
+        { 'Bot Name': 'Beta', 'English Category': 'Network', 'API Required?': 'Yes', 'Automation Potential': 'উচ্চ' }
+      ];
+      const summary = analytics.summarize(sample);
+      return {
+        available: Boolean(analytics && typeof analytics.summarize === 'function'),
+        highEnglish: analytics.isHighAutomation('High'),
+        highBangla: analytics.isHighAutomation('উচ্চ'),
+        medium: analytics.isHighAutomation('Medium'),
+        totalRecords: summary.totalRecords,
+        totalCategories: summary.totalCategories,
+        apiRequired: summary.apiRequired,
+        highAutomation: summary.highAutomation,
+        categoryCounts: summary.categoryCounts,
+        automationCounts: summary.automationCounts,
+        sourceLength: sample.length
+      };
+    });
+    assert.equal(analyticsEngineContract.available, true);
+    assert.equal(analyticsEngineContract.highEnglish, true);
+    assert.equal(analyticsEngineContract.highBangla, true);
+    assert.equal(analyticsEngineContract.medium, false);
+    assert.equal(analyticsEngineContract.totalRecords, 3);
+    assert.equal(analyticsEngineContract.totalCategories, 2);
+    assert.equal(analyticsEngineContract.apiRequired, 2);
+    assert.equal(analyticsEngineContract.highAutomation, 2);
+    assert.deepEqual(analyticsEngineContract.categoryCounts, { Ops: 2, Network: 1 });
+    assert.deepEqual(analyticsEngineContract.automationCounts, { High: 1, Medium: 1, 'উচ্চ': 1 });
+
     const mainEngineContract = await page.evaluate(async () => {
       const main = window.TBMC.mainEngine;
       const manager = window.TBMC.moduleManager;
@@ -325,6 +358,8 @@ async function main() {
         searchHealth: manager.getEngine('search-engine')?.health.status,
         historyState: manager.getEngine('history-engine')?.state,
         historyHealth: manager.getEngine('history-engine')?.health.status,
+        analyticsState: manager.getEngine('analytics-engine')?.state,
+        analyticsHealth: manager.getEngine('analytics-engine')?.health.status,
         loadPromiseCached: datasetA === datasetB,
         runtimeReadySchema: window.TBMC.engineCore.getEventSchema('runtime.ready') !== null,
         catalogLoadedSchema: window.TBMC.engineCore.getEventSchema('catalog.loaded') !== null,
@@ -344,10 +379,12 @@ async function main() {
     assert.equal(mainEngineContract.searchHealth, 'healthy');
     assert.equal(mainEngineContract.historyState, 'active');
     assert.equal(mainEngineContract.historyHealth, 'healthy');
+    assert.equal(mainEngineContract.analyticsState, 'active');
+    assert.equal(mainEngineContract.analyticsHealth, 'healthy');
     assert.equal(mainEngineContract.loadPromiseCached, true, 'Storage and Catalog must share the validated dataset load');
     assert.equal(mainEngineContract.runtimeReadySchema, true);
     assert.equal(mainEngineContract.catalogLoadedSchema, true);
-    assert.equal(mainEngineContract.engineCount, 4);
+    assert.equal(mainEngineContract.engineCount, 5);
 
     const moduleManagerContract = await page.evaluate(async () => {
       const manager = window.TBMC.moduleManager;
