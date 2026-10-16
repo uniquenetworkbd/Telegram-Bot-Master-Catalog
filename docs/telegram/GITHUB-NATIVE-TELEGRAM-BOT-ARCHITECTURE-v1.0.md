@@ -33,7 +33,7 @@ A module has a stable ID, SemVer version, description, command list, capabilitie
 - The first run without a saved offset advances past already-pending updates to avoid unexpectedly replying to old messages. Subsequent runs process new updates.
 - Offset state is kept in a GitHub Actions artifact; this is not a transactional database. A failed run can cause a duplicate reply on a retry, so processing is at-least-once rather than exactly-once.
 - The bot accepts public catalog search commands from chats that can reach it. It does not store raw message content or chat history. Do not add private or sensitive user workflows without a separate privacy/security review.
-- The poller requires that the bot use long-polling rather than a configured webhook, and only one poller should use the token.
+- The poller requires that the bot use long-polling rather than a configured webhook, and only one poller should use the token. GitHub Actions restores the offset only from a successful prior run that actually uploaded the offset artifact.
 
 ## What is and is not implemented
 
@@ -49,8 +49,7 @@ Implemented in source:
 Not implemented or not yet verified:
 - No bot token/chat ID has been supplied through repository settings by this code change.
 - The smoke workflow has not been confirmed against a real Telegram chat until it is manually run with valid secrets/variables.
-- GitHub Actions is not a permanent webhook server or always-on polling service. It cannot provide a reliable continuously running bot process or persistent update offset by itself.
-- Incoming update processing, durable conversation state, central user/session storage, private admin authentication, and a production bot runtime require a later runtime/backend phase. No external hosting/database platform is added in this phase.
+- Durable conversation state, central user/session storage, private admin authentication, and a production-grade always-on runtime require a later runtime/backend phase. No external hosting/database platform is added in this phase.
 
 ## Security and release rules
 
